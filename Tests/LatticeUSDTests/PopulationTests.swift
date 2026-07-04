@@ -21,6 +21,8 @@ import XCTest
 private final class FakeStageSource: USDStageSource
 {
   var attributes: [String: [String: LatticeUSDValue]]
+  /// Captures what `setAttributeValue` authored, for write-back assertions.
+  private(set) var written: [String: [String: LatticeUSDValue]] = [:]
 
   init(attributes: [String: [String: LatticeUSDValue]])
   {
@@ -35,6 +37,12 @@ private final class FakeStageSource: USDStageSource
   func attributeValue(at path: String, attribute name: String) -> LatticeUSDValue?
   {
     attributes[path]?[name]
+  }
+
+  func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
+  {
+    written[path, default: [:]][name] = value
+    return true
   }
 }
 
@@ -123,5 +131,36 @@ final class PopulationTests: XCTestCase
 
     // No change -> no work.
     XCTAssertTrue(sync.syncIncremental().isEmpty)
+  }
+
+  func testWriteBackChangedPushesOnlyChangedComponents() throws
+  {
+    let store = LatticeStore()
+    let paths = LatticePathTable()
+    let source = FakeStageSource(attributes: [
+      "/a": ["xformOp:translate": .float3(0, 0, 0)],
+      "/b": ["xformOp:translate": .float3(0, 0, 0)],
+    ])
+    let sync = USDPopulationSync(store: store, paths: paths, source: source)
+    sync.syncAll()
+    sync.populate(Transform.self, from: "xformOp:translate")
+    { value in
+      guard case let .float3(x, y, z) = value else { return nil }
+      return Transform(x: x, y: y, z: z)
+    }
+
+    // Checkpoint, then mutate only /a's transform.
+    let checkpoint = store.currentTick
+    store.advanceChangeTick()
+    let entityA = try XCTUnwrap(paths.entity(for: "/a"))
+    store.set(Transform(x: 1, y: 2, z: 3), on: entityA)
+
+    let written = sync.writeBackChanged(Transform.self, to: "xformOp:translate", since: checkpoint)
+    { .float3($0.x, $0.y, $0.z) }
+
+    // Only the changed entity is authored back to the stage.
+    XCTAssertEqual(written, 1)
+    XCTAssertEqual(source.written["/a"]?["xformOp:translate"], .float3(1, 2, 3))
+    XCTAssertNil(source.written["/b"])
   }
 }

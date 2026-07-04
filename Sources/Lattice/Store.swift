@@ -119,7 +119,7 @@ public final class LatticeStore
 
   /// Ensures `T` has a copier and column factory, registering defaults if it's
   /// the first time the store has seen it.
-  private func ensureRegistered<T: LatticeComponent>(_ type: T.Type)
+  private func ensureRegistered(_ type: (some LatticeComponent).Type)
   {
     if columnFactories[ObjectIdentifier(type)] == nil
     {
@@ -302,17 +302,32 @@ public final class LatticeStore
   /// branching on "does this entity actually have this component".
   func matchingArchetypes(required: Set<ComponentTypeID>) -> [Archetype]
   {
-    guard let anchor = required.first else { return archetypes }
+    matchingArchetypes(required: required, excluded: [])
+  }
+
+  /// Every archetype whose signature is a superset of `required` **and**
+  /// contains none of `excluded`. The exclusion set is how a query says
+  /// "entities with A but *without* B" - the standard ECS negative filter,
+  /// useful for tag-style opt-outs (a `Disabled`/`Hidden` marker component).
+  func matchingArchetypes(required: Set<ComponentTypeID>, excluded: Set<ComponentTypeID>) -> [Archetype]
+  {
+    guard let anchor = required.first
+    else
+    {
+      return excluded.isEmpty ? archetypes : archetypes.filter { $0.signature.isDisjoint(with: excluded) }
+    }
 
     // Start from the archetypes that at least contain one required type
     // (the rarest would be ideal; the first is a cheap approximation), then
-    // confirm each is a full superset. This avoids touching archetypes that
-    // don't hold `anchor` at all.
+    // confirm each is a full superset and holds none of the excluded types.
     guard let candidates = archetypeIndicesByComponent[anchor] else { return [] }
     return candidates.compactMap
     { index in
       let archetype = archetypes[index]
-      return archetype.signature.isSuperset(of: required) ? archetype : nil
+      guard archetype.signature.isSuperset(of: required),
+            archetype.signature.isDisjoint(with: excluded)
+      else { return nil }
+      return archetype
     }
   }
 

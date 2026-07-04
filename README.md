@@ -104,6 +104,23 @@ enforceable contract:
   indices. They must not run concurrently with a query. Run structural edits
   between parallel passes, not during them - the same discipline Fabric's
   bucket model requires.
+- **Systems run in parallel across disjoint access sets.** A `LatticeSystem`
+  declares the component types it reads and writes; `LatticeScheduler` groups
+  non-conflicting systems into waves that run concurrently, ordering only the
+  pairs that actually conflict (write-write, or read-vs-write on the same type).
+  This is the across-systems complement to the within-a-query parallelism above
+  - the scheduling model Fabric uses to fill a frame across cores.
+
+```swift
+let scheduler = LatticeScheduler()
+scheduler.add(LatticeSystem("integrate", reads: [Velocity.self], writes: [Transform.self]) { store in
+    store.query(Transform.self, Velocity.self).forEachMutatingFirst { _, t, v in t.x += v.dx }
+})
+scheduler.add(LatticeSystem("regen", writes: [Health.self]) { store in
+    store.query(Health.self).forEachMutating { _, h in h.hp += 1 }
+})
+scheduler.run(on: store)   // integrate and regen touch different types -> one concurrent wave
+```
 
 ## What's implemented
 
@@ -121,25 +138,36 @@ enforceable contract:
   `forEachChanged(since:)`) answer "*which* entities' `T` changed", and ticks
   are preserved across archetype moves so an unrelated add/remove never looks
   like a value edit.
-- **Queries up to arity four**, with vectorizable contiguous iteration and the
-  parallel mutation path above.
-- **USD population *and* synchronization.** `syncAll()` does one-time
-  population; `syncIncremental()` diffs the stage's current prim set against the
-  last-seen set and spawns/despawns only the delta - USDRT's
-  population-vs-synchronization split. `OpenUSDStageSource` is a concrete
-  `USDStageSource` backed by a real `UsdStage` via `wabiverse/swift-usd`.
+- **Queries up to arity four**, with vectorizable contiguous iteration, the
+  parallel mutation path above, and `excluding:` negative filters
+  (`store.query(Transform.self, excluding: Hidden.self)`).
+- **A system scheduler** (`LatticeSystem` / `LatticeScheduler`) that runs
+  systems concurrently when their declared read/write sets are disjoint, and
+  orders the conflicting pairs.
+- **USD population, synchronization, *and* write-back - the full loop.**
+  `syncAll()` does one-time population; `syncIncremental()` diffs the stage's
+  current prim set against the last-seen set and spawns/despawns only the delta;
+  `writeBackChanged(...)` authors component values back onto stage attributes,
+  touching only the rows that changed since a given tick (via the same per-row
+  change ticks). That's USDRT's population-vs-synchronization split plus the
+  return path. `OpenUSDStageSource` is a concrete `USDStageSource` backed by a
+  real `UsdStage` via `wabiverse/swift-usd`.
 
 ## Roadmap
 
 What's genuinely still ahead, in rough priority:
 
-- **A system scheduler** that runs *different* systems concurrently when their
-  component read/write sets are disjoint - the current parallelism is within a
-  single query; the next step is across systems, inferred from access sets.
-- **Query filtering** - `without:` exclusion and optional components - plus
-  arity beyond four via parameter packs rather than more overloads.
-- **Writing computed values back to USD** on the same invalidation graph that
-  drives recompute, closing the loop between the runtime store and the stage.
+- **Query arity beyond four** via parameter packs rather than more overloads,
+  and **optional components** in a query (visit entities with `A`, and `B` if
+  present).
+- **Structural commands buffered from within systems** - let a scheduled system
+  record spawn/despawn/add/remove requests that the store applies at the wave
+  barrier, so structural change composes with the parallel scheduler instead of
+  sitting strictly between runs.
+- **Write-back driven by an execution graph.** `writeBackChanged` already closes
+  the store->stage loop by change tick; wiring it to `ExecUsdSystem`'s
+  invalidation graph would let recompute *and* write-back share the one signal
+  that already knows what's dirty.
 
 ## Integrating with `wabiverse/swift-usd`
 
@@ -151,7 +179,7 @@ values, mapping USD value types to `LatticeUSDValue`.
 ```swift
 let source = OpenUSDStageSource(openingStageAt: "scene.usd")
 let sync = USDPopulationSync(store: store, paths: paths, source: source)
-sync.syncAll()                                    // one-time population
+sync.syncAll()   // one-time population
 sync.populate(Transform.self, from: "xformOp:translate") { value in
     guard case let .float3(x, y, z) = value else { return nil }
     return Transform(x: x, y: y, z: z)

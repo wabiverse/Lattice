@@ -1,4 +1,5 @@
 --acronyms ID,URL,UUID
+--anonymous-for-each ignore
 --allman true
 --assetliterals visual-width
 --asynccapturing 
@@ -81,5 +82,5 @@
 --wraptypealiases preserve
 --xcodeindentation disabled
 --yodaswap always
---disable trailingCommas
+--disable trailingCommas,preferForLoop
 --enable blankLineAfterImports,docComments,isEmpty

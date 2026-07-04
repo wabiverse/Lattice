@@ -22,11 +22,27 @@ public protocol USDStageSource
   /// Reads a named attribute's current resolved value at `path`, if the
   /// prim and attribute exist.
   func attributeValue(at path: String, attribute name: String) -> LatticeUSDValue?
+
+  /// Writes `value` to the named attribute at `path`, returning whether the
+  /// write landed. The reverse direction - pushing computed runtime values
+  /// back onto the stage - used by `USDPopulationSync.writeBackChanged(...)`.
+  ///
+  /// Read-only sources can leave this at the default (a no-op returning
+  /// `false`); only sources meant to author back into USD implement it.
+  func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
+}
+
+public extension USDStageSource
+{
+  func setAttributeValue(_: LatticeUSDValue, at _: String, attribute _: String) -> Bool
+  {
+    false
+  }
 }
 
 /// A small, closed set of value types Lattice knows how to copy into its
 /// own columns.
-public enum LatticeUSDValue
+public enum LatticeUSDValue: Equatable, Sendable
 {
   case double(Double)
   case float3(Float, Float, Float)

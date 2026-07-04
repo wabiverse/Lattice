@@ -58,22 +58,24 @@ func integrate(_ transform: inout Transform, _ velocity: Velocity)
   transform.z += velocity.dz * dt
 }
 
-// Serial pass.
+/// Serial pass.
 let serialStart = Date()
 for _ in 0 ..< frames
 {
   query.forEachMutatingFirst { _, transform, velocity in integrate(&transform, velocity) }
   store.advanceFrame()
 }
+
 let serialElapsed = Date().timeIntervalSince(serialStart)
 
-// Parallel pass (data-parallel value mutation across cores).
+/// Parallel pass (data-parallel value mutation across cores).
 let parallelStart = Date()
 for _ in 0 ..< frames
 {
   query.forEachMutatingFirstParallel { transform, velocity in integrate(&transform, velocity) }
   store.advanceFrame()
 }
+
 let parallelElapsed = Date().timeIntervalSince(parallelStart)
 
 print("Lattice demo")

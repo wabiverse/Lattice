@@ -38,9 +38,13 @@ public final class USDPopulationSync
   {
     public var added: Int
     public var removed: Int
-    public var isEmpty: Bool { added == 0 && removed == 0 }
-    
-    public init(added: Int, removed: Int) {
+    public var isEmpty: Bool
+    {
+      added == 0 && removed == 0
+    }
+
+    public init(added: Int, removed: Int)
+    {
       self.added = added
       self.removed = removed
     }
@@ -140,7 +144,7 @@ public final class USDPopulationSync
   /// full re-pull.
   @discardableResult
   public func populate<T: LatticeComponent>(
-    _ type: T.Type,
+    _: T.Type,
     from attribute: String,
     decode: (LatticeUSDValue) -> T?
   ) -> Int
@@ -156,5 +160,46 @@ public final class USDPopulationSync
       populated += 1
     }
     return populated
+  }
+
+  /// Authors component values back onto the stage - the store->USD direction -
+  /// touching only the entities whose `T` changed strictly after `tick`.
+  ///
+  /// This closes the loop USDRT draws: `populate` pulls USD into the store, a
+  /// system mutates the store, and this pushes the results back, but *only for
+  /// what changed*, using the store's per-row change ticks (`store.currentTick`
+  /// / `forEachChanged`). Encode each component into a `LatticeUSDValue` and it
+  /// funnels through `USDStageSource.setAttributeValue`; returning `nil` from
+  /// `encode` skips that entity. Entities with no bound path are skipped.
+  /// Returns the number of attributes written.
+  ///
+  /// Typical loop:
+  /// ```swift
+  /// let lastWrite = store.currentTick
+  /// // …systems mutate Transform…
+  /// store.advanceChangeTick()
+  /// sync.writeBackChanged(Transform.self, to: "xformOp:translate", since: lastWrite) {
+  ///     .float3($0.x, $0.y, $0.z)
+  /// }
+  /// ```
+  @discardableResult
+  public func writeBackChanged<T: LatticeComponent>(
+    _: T.Type,
+    to attribute: String,
+    since tick: UInt64,
+    encode: (T) -> LatticeUSDValue?
+  ) -> Int
+  {
+    var written = 0
+    store.query(T.self).forEachChanged(since: tick)
+    { entity, value in
+      guard
+        let path = paths.path(for: entity),
+        let encoded = encode(value),
+        source.setAttributeValue(encoded, at: path, attribute: attribute)
+      else { return }
+      written += 1
+    }
+    return written
   }
 }

@@ -116,6 +116,36 @@ public final class OpenUSDStageSource: USDStageSource
     }
   }
 
+  /// Writes `value` to attribute `name` on the prim at `path` at the default
+  /// time, returning whether it landed. The attribute must already exist on
+  /// the stage (this authors a value, it doesn't create the attribute) and the
+  /// stage's edit target must be writable.
+  ///
+  /// This is the store->stage half of the loop: after a system computes new
+  /// values in the runtime store, `USDPopulationSync.writeBackChanged` funnels
+  /// the changed rows through here to author them back onto USD.
+  public func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
+  {
+    let prim = stage.getPrim(at: path)
+    guard prim.IsValid() else { return false }
+
+    let attribute = prim.GetAttribute(Tf.Token(name))
+    guard attribute.IsValid() else { return false }
+
+    let time = UsdTimeCode.Default()
+    switch value
+    {
+      case let .double(d):
+        return attribute.Set(d, time)
+      case let .bool(b):
+        return attribute.Set(b, time)
+      case let .string(s):
+        return attribute.Set(std.string(s), time)
+      case let .float3(x, y, z):
+        return attribute.Set(GfVec3f(SIMD3<Float>(x, y, z)), time)
+    }
+  }
+
   /// Three-component `float`-backed USD types (`float3` and its roled
   /// variants), all stored as `GfVec3f`.
   private static func isFloat3(_ typeName: String) -> Bool
@@ -123,9 +153,9 @@ public final class OpenUSDStageSource: USDStageSource
     switch typeName
     {
       case "float3", "point3f", "normal3f", "vector3f", "color3f", "texCoord3f":
-        return true
+        true
       default:
-        return false
+        false
     }
   }
 
@@ -136,9 +166,9 @@ public final class OpenUSDStageSource: USDStageSource
     switch typeName
     {
       case "double3", "point3d", "normal3d", "vector3d", "color3d":
-        return true
+        true
       default:
-        return false
+        false
     }
   }
 }

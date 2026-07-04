@@ -22,7 +22,10 @@ import Foundation
 private struct UnsafeSendable<P>: @unchecked Sendable
 {
   let pointer: P
-  init(_ pointer: P) { self.pointer = pointer }
+  init(_ pointer: P)
+  {
+    self.pointer = pointer
+  }
 }
 
 /// A read-only view over every entity that has a component of type `A`.
@@ -35,9 +38,12 @@ public struct Query1<A: LatticeComponent>
 {
   private let archetypes: [Archetype]
 
-  init(store: LatticeStore)
+  init(store: LatticeStore, excluding: [any LatticeComponent.Type] = [])
   {
-    archetypes = store.matchingArchetypes(required: [ObjectIdentifier(A.self)])
+    archetypes = store.matchingArchetypes(
+      required: [ObjectIdentifier(A.self)],
+      excluded: Set(excluding.map(ObjectIdentifier.init))
+    )
   }
 
   public func forEach(_ body: (LatticeEntity, A) -> Void)
@@ -51,6 +57,23 @@ public struct Query1<A: LatticeComponent>
         for row in 0 ..< a.count
         {
           body(entities[row], a[row])
+        }
+      }
+    }
+  }
+
+  /// Bulk-mutates `A` in place over contiguous storage.
+  public func forEachMutating(_ body: (LatticeEntity, inout A) -> Void)
+  {
+    for archetype in archetypes
+    {
+      guard let column = archetype.column(A.self) else { continue }
+      let entities = archetype.entities
+      column.withUnsafeMutableBufferPointer
+      { a in
+        for row in 0 ..< a.count
+        {
+          body(entities[row], &a[row])
         }
       }
     }
@@ -84,9 +107,12 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
 {
   private let archetypes: [Archetype]
 
-  init(store: LatticeStore)
+  init(store: LatticeStore, excluding: [any LatticeComponent.Type] = [])
   {
-    archetypes = store.matchingArchetypes(required: [ObjectIdentifier(A.self), ObjectIdentifier(B.self)])
+    archetypes = store.matchingArchetypes(
+      required: [ObjectIdentifier(A.self), ObjectIdentifier(B.self)],
+      excluded: Set(excluding.map(ObjectIdentifier.init))
+    )
   }
 
   /// Calls `body` once per matching entity, in archetype/row order.
@@ -240,9 +266,12 @@ public struct Query3<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
         let columnC = archetype.column(C.self)
       else { continue }
       let entities = archetype.entities
-      columnA.withUnsafeBufferPointer { a in
-        columnB.withUnsafeBufferPointer { b in
-          columnC.withUnsafeBufferPointer { c in
+      columnA.withUnsafeBufferPointer
+      { a in
+        columnB.withUnsafeBufferPointer
+        { b in
+          columnC.withUnsafeBufferPointer
+          { c in
             for row in 0 ..< a.count
             {
               body(entities[row], a[row], b[row], c[row])
@@ -264,9 +293,12 @@ public struct Query3<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
         let columnC = archetype.column(C.self)
       else { continue }
       let entities = archetype.entities
-      columnA.withUnsafeMutableBufferPointer { a in
-        columnB.withUnsafeBufferPointer { b in
-          columnC.withUnsafeBufferPointer { c in
+      columnA.withUnsafeMutableBufferPointer
+      { a in
+        columnB.withUnsafeBufferPointer
+        { b in
+          columnC.withUnsafeBufferPointer
+          { c in
             for row in 0 ..< a.count
             {
               body(entities[row], &a[row], b[row], c[row])
@@ -302,10 +334,14 @@ public struct Query4<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
         let columnD = archetype.column(D.self)
       else { continue }
       let entities = archetype.entities
-      columnA.withUnsafeBufferPointer { a in
-        columnB.withUnsafeBufferPointer { b in
-          columnC.withUnsafeBufferPointer { c in
-            columnD.withUnsafeBufferPointer { d in
+      columnA.withUnsafeBufferPointer
+      { a in
+        columnB.withUnsafeBufferPointer
+        { b in
+          columnC.withUnsafeBufferPointer
+          { c in
+            columnD.withUnsafeBufferPointer
+            { d in
               for row in 0 ..< a.count
               {
                 body(entities[row], a[row], b[row], c[row], d[row])
@@ -329,10 +365,14 @@ public struct Query4<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
         let columnD = archetype.column(D.self)
       else { continue }
       let entities = archetype.entities
-      columnA.withUnsafeMutableBufferPointer { a in
-        columnB.withUnsafeBufferPointer { b in
-          columnC.withUnsafeBufferPointer { c in
-            columnD.withUnsafeBufferPointer { d in
+      columnA.withUnsafeMutableBufferPointer
+      { a in
+        columnB.withUnsafeBufferPointer
+        { b in
+          columnC.withUnsafeBufferPointer
+          { c in
+            columnD.withUnsafeBufferPointer
+            { d in
               for row in 0 ..< a.count
               {
                 body(entities[row], &a[row], b[row], c[row], d[row])
@@ -355,6 +395,24 @@ public extension LatticeStore
   func query<A: LatticeComponent, B: LatticeComponent>(_: A.Type, _: B.Type) -> Query2<A, B>
   {
     Query2<A, B>(store: self)
+  }
+
+  /// `query(A.self, excluding: B.self)` - every entity with `A` but without any
+  /// of the excluded component types.
+  func query<A: LatticeComponent>(
+    _: A.Type, excluding: any LatticeComponent.Type...
+  ) -> Query1<A>
+  {
+    Query1<A>(store: self, excluding: excluding)
+  }
+
+  /// `query(A.self, B.self, excluding: C.self)` - every entity with `A` and `B`
+  /// but without any of the excluded component types.
+  func query<A: LatticeComponent, B: LatticeComponent>(
+    _: A.Type, _: B.Type, excluding: any LatticeComponent.Type...
+  ) -> Query2<A, B>
+  {
+    Query2<A, B>(store: self, excluding: excluding)
   }
 
   func query<A: LatticeComponent, B: LatticeComponent, C: LatticeComponent>(
