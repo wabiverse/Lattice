@@ -43,9 +43,10 @@ unified memory, and Swift's own concurrency for parallel iteration.
   binding populate a `LatticeStore`, without Lattice depending on that
   binding's concrete API.
 - **`LatticeDemo`** - `swift run -c release LatticeDemo`: spawns 100k entities
-  with a `Transform`/`Velocity` pair and integrates position for 120 frames,
-  timing the serial and parallel query paths against each other (~3x+ on an
-  8-performance-core M-series).
+  with a `Transform`/`Velocity` pair and integrates position for 120 frames.
+  It benchmarks the serial query path against the parallel query path. On an
+  8-performance-core M-series chip, the parallel CPU path yields a ~3x+ speedup,
+  while the GPU path delivers a ~7x+ speedup over parallel CPU.
 
 ## Core concepts
 
