@@ -26,6 +26,14 @@ public protocol ColumnStorage: AnyObject
   /// Number of rows currently stored.
   var count: Int { get }
 
+  /// A single tick meaning "every row in this column changed as of this
+  /// tick" - set by a full bulk-mutation pass (CPU or GPU) instead of writing
+  /// `count` individual per-row ticks. `forEachChanged` checks this before
+  /// falling back to per-row ticks. Only ``markWholeColumnChanged(tick:)``
+  /// advances this - see that method for why raw buffer access alone does
+  /// not.
+  var wholeColumnTick: UInt64 { get }
+
   /// Removes the row at `index` by moving the last row into its place
   /// (swap-remove), keeping the column dense. Returns whether a row was
   /// actually moved (`false` when removing the last row, or an
@@ -34,7 +42,8 @@ public protocol ColumnStorage: AnyObject
   func swapRemove(at index: Int) -> Bool
 
   /// Monotonically increasing counter, bumped on every *content* write to
-  /// this column - appending a value or overwriting one - but **not** on the
+  /// this column - appending a value, overwriting one, or a bulk-mutation
+  /// pass recorded via ``markWholeColumnChanged(tick:)`` - but **not** on the
   /// swap-remove that structural changes (despawn, moving an entity between
   /// archetypes) perform. This is Lattice's stand-in for USD's `TfNotice`:
   /// instead of subscribing to a callback per value change, a system compares
@@ -49,6 +58,21 @@ public protocol ColumnStorage: AnyObject
   /// so structural code (archetype moves) can read and preserve a row's tick
   /// without knowing its concrete element type.
   func changeTick(at index: Int) -> UInt64
+
+  /// Records that every row in this column changed as of `tick`: bumps
+  /// ``mutationGeneration`` and advances ``wholeColumnTick`` together, as a
+  /// single atomic bookkeeping step.
+  ///
+  /// This is the **only** thing that should mark a bulk mutation as having
+  /// happened. Raw buffer access (`withUnsafeMutableBufferPointer` on
+  /// ``TypedColumnStorage``) intentionally does not call this itself - it's a
+  /// storage primitive, not a change-tracking decision - so a caller doing a
+  /// real bulk write must call this once, after the write, to make it visible
+  /// to both ``mutationGeneration`` and ``ColumnStorage/wholeColumnTick``.
+  /// Every mutating `Query` path already does this; call it yourself only if
+  /// you're driving a column outside a query (e.g. writing into a
+  /// `MetalBackedColumn`'s buffer from a compute pass).
+  func markWholeColumnChanged(tick: UInt64)
 }
 
 /// A column with a statically known element type, supporting typed reads,
@@ -84,8 +108,15 @@ public protocol TypedColumnStorage<Element>: ColumnStorage
   /// Read-only contiguous access for vectorizable bulk iteration.
   func withUnsafeBufferPointer<R>(_ body: (UnsafeBufferPointer<Element>) throws -> R) rethrows -> R
 
-  /// Mutable contiguous access for vectorizable bulk mutation. Bumps
-  /// ``mutationGeneration`` once for the whole pass.
+  /// Mutable contiguous access for vectorizable bulk mutation.
+  ///
+  /// This is a raw storage primitive only - it does **not** update
+  /// ``ColumnStorage/mutationGeneration`` or ``ColumnStorage/wholeColumnTick``
+  /// on its own. A caller that actually mutates through this must follow up
+  /// with ``ColumnStorage/markWholeColumnChanged(tick:)`` once the pass is
+  /// done, so both change-tracking signals advance together exactly once per
+  /// pass - not once here plus once more at the call site. Every mutating
+  /// `Query` method already does this for you.
   func withUnsafeMutableBufferPointer<R>(_ body: (UnsafeMutableBufferPointer<Element>) throws -> R) rethrows -> R
 }
 
@@ -101,6 +132,7 @@ public final class TypedColumn<T: LatticeComponent>: TypedColumnStorage
   /// Per-row "last changed" ticks, kept parallel to `values`.
   private var ticks: [UInt64] = []
   public private(set) var mutationGeneration: UInt64 = 0
+  public private(set) var wholeColumnTick: UInt64 = 0
 
   public init() {}
 
@@ -148,6 +180,12 @@ public final class TypedColumn<T: LatticeComponent>: TypedColumnStorage
     ticks[index]
   }
 
+  public func markWholeColumnChanged(tick: UInt64)
+  {
+    mutationGeneration &+= 1
+    wholeColumnTick = tick
+  }
+
   /// Borrows the whole column as a contiguous buffer for read-only bulk
   /// iteration. This is the "structure of arrays" payoff: the closure sees a
   /// flat `UnsafeBufferPointer<T>` the optimizer can walk (and vectorize)
@@ -159,15 +197,14 @@ public final class TypedColumn<T: LatticeComponent>: TypedColumnStorage
   }
 
   /// Borrows the whole column as a contiguous *mutable* buffer for bulk
-  /// mutation. Bumps ``mutationGeneration`` once for the whole pass - the
-  /// caller is assumed to write - rather than once per element, which both
-  /// keeps the change counter coarse (as intended) and lets the inner loop
-  /// stay branch- and call-free.
+  /// mutation. Deliberately does not touch ``mutationGeneration`` or
+  /// ``wholeColumnTick`` itself - see the protocol doc comment. Callers doing
+  /// a real bulk write call ``markWholeColumnChanged(tick:)`` once afterward;
+  /// every mutating `Query` method already does this.
   @inline(__always)
   public func withUnsafeMutableBufferPointer<R>(_ body: (UnsafeMutableBufferPointer<T>) throws -> R) rethrows -> R
   {
-    mutationGeneration &+= 1
-    return try values.withUnsafeMutableBufferPointer { try body($0) }
+    try values.withUnsafeMutableBufferPointer { try body($0) }
   }
 
   @discardableResult

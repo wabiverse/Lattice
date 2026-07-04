@@ -54,6 +54,7 @@
     private var capacity: Int
     public private(set) var count: Int = 0
     public private(set) var mutationGeneration: UInt64 = 0
+    public private(set) var wholeColumnTick: UInt64 = 0
     /// Per-row change ticks, mirrored CPU-side alongside the GPU buffer so
     /// change detection works identically to the array-backed column.
     private var ticks: [UInt64] = []
@@ -155,6 +156,12 @@
     {
       ticks[index]
     }
+    
+    public func markWholeColumnChanged(tick: UInt64)
+    {
+      mutationGeneration &+= 1
+      wholeColumnTick = tick
+    }
 
     @inline(__always)
     public func withUnsafeBufferPointer<R>(_ body: (UnsafeBufferPointer<T>) throws -> R) rethrows -> R
@@ -162,10 +169,14 @@
       try body(UnsafeBufferPointer(start: typedPointer(), count: count))
     }
 
+    /// Borrows the whole column as a contiguous *mutable* buffer for bulk
+    /// mutation. Deliberately does not touch ``mutationGeneration`` or
+    /// ``wholeColumnTick`` itself - see the protocol doc comment. Callers doing
+    /// a real bulk write call ``markWholeColumnChanged(tick:)`` once afterward;
+    /// every mutating `Query` method already does this.
     @inline(__always)
     public func withUnsafeMutableBufferPointer<R>(_ body: (UnsafeMutableBufferPointer<T>) throws -> R) rethrows -> R
     {
-      mutationGeneration &+= 1
       return try body(UnsafeMutableBufferPointer(start: typedPointer(), count: count))
     }
 

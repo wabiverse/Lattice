@@ -37,9 +37,11 @@ private struct UnsafeSendable<P>: @unchecked Sendable
 public struct Query1<A: LatticeComponent>
 {
   private let archetypes: [Archetype]
+  private let tick: UInt64
 
   init(store: LatticeStore, excluding: [any LatticeComponent.Type] = [])
   {
+    tick = store.currentTick
     archetypes = store.matchingArchetypes(
       required: [ObjectIdentifier(A.self)],
       excluded: Set(excluding.map(ObjectIdentifier.init))
@@ -76,6 +78,7 @@ public struct Query1<A: LatticeComponent>
           body(entities[row], &a[row])
         }
       }
+      column.markWholeColumnChanged(tick: tick)
     }
   }
 
@@ -90,9 +93,10 @@ public struct Query1<A: LatticeComponent>
     {
       guard let column = archetype.column(A.self) else { continue }
       let entities = archetype.entities
+      let wholeChanged = column.wholeColumnTick > tick
       column.withUnsafeBufferPointer
       { a in
-        for row in 0 ..< a.count where column.changeTick(at: row) > tick
+        for row in 0 ..< a.count where wholeChanged || column.changeTick(at: row) > tick
         {
           body(entities[row], a[row])
         }
@@ -106,9 +110,11 @@ public struct Query1<A: LatticeComponent>
 public struct Query2<A: LatticeComponent, B: LatticeComponent>
 {
   private let archetypes: [Archetype]
+  private let tick: UInt64
 
   init(store: LatticeStore, excluding: [any LatticeComponent.Type] = [])
   {
+    tick = store.currentTick
     archetypes = store.matchingArchetypes(
       required: [ObjectIdentifier(A.self), ObjectIdentifier(B.self)],
       excluded: Set(excluding.map(ObjectIdentifier.init))
@@ -135,6 +141,19 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
     }
   }
 
+  /// Visits the backing column pair for every matching archetype. This is the
+  /// storage-level counterpart to `forEach`: systems that need to hand an
+  /// entire matching column pair to an accelerator can still use the same
+  /// query match instead of reaching around the store.
+  public func forEachColumnPair(_ body: (any TypedColumnStorage<A>, any TypedColumnStorage<B>) -> Void)
+  {
+    for archetype in archetypes
+    {
+      guard let columnA = archetype.column(A.self), let columnB = archetype.column(B.self) else { continue }
+      body(columnA, columnB)
+    }
+  }
+
   /// Bulk-mutates `A` in place using the current value of `B`, without any
   /// per-entity lookups. This is the shape a transform-integration or
   /// physics-response system should use: mutate the thing driven by
@@ -156,6 +175,7 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
           }
         }
       }
+      columnA.markWholeColumnChanged(tick: tick)
     }
   }
 
@@ -176,6 +196,7 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
           }
         }
       }
+      columnB.markWholeColumnChanged(tick: tick)
     }
   }
 
@@ -240,6 +261,7 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
           }
         }
       }
+      columnA.markWholeColumnChanged(tick: tick)
     }
   }
 }
@@ -248,9 +270,11 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
 public struct Query3<A: LatticeComponent, B: LatticeComponent, C: LatticeComponent>
 {
   private let archetypes: [Archetype]
+  private let tick: UInt64
 
   init(store: LatticeStore)
   {
+    tick = store.currentTick
     archetypes = store.matchingArchetypes(required: [
       ObjectIdentifier(A.self), ObjectIdentifier(B.self), ObjectIdentifier(C.self),
     ])
@@ -306,6 +330,7 @@ public struct Query3<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
           }
         }
       }
+      columnA.markWholeColumnChanged(tick: tick)
     }
   }
 }
@@ -314,9 +339,11 @@ public struct Query3<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
 public struct Query4<A: LatticeComponent, B: LatticeComponent, C: LatticeComponent, D: LatticeComponent>
 {
   private let archetypes: [Archetype]
+  private let tick: UInt64
 
   init(store: LatticeStore)
   {
+    tick = store.currentTick
     archetypes = store.matchingArchetypes(required: [
       ObjectIdentifier(A.self), ObjectIdentifier(B.self),
       ObjectIdentifier(C.self), ObjectIdentifier(D.self),
@@ -381,6 +408,7 @@ public struct Query4<A: LatticeComponent, B: LatticeComponent, C: LatticeCompone
           }
         }
       }
+      columnA.markWholeColumnChanged(tick: tick)
     }
   }
 }

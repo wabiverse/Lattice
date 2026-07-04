@@ -46,7 +46,8 @@ let package = Package(
     .executableTarget(
       name: "LatticeDemo",
       dependencies: [
-        .target(name: "Lattice")
+        .target(name: "Lattice"),
+        .target(name: "LatticeMetal")
       ]
     ),
 
