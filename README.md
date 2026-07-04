@@ -1,8 +1,8 @@
 # Lattice
 
 A Swift-native, open-source runtime data store for real-time scenes -
-the same problem NVIDIA's Fabric/USDRT solve inside Omniverse, built as its
-own thing rather than a port of that API.
+the same problem [NVIDIA's Fabric/USDRT](https://docs.omniverse.nvidia.com/kit/docs/usdrt.scenegraph/latest/usd_fabric_usdrt.html)
+solve inside Omniverse, built as its own thing rather than a port of that API.
 
 Lattice is not a scene graph, not a composition engine, and not tied to
 USD. It's a small archetype-based store: entities, columns of component
