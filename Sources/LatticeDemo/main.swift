@@ -12,14 +12,16 @@
 
 import Foundation
 import Lattice
+import LatticeUSD
+import OpenUSDKit
 
 #if canImport(Metal)
   import LatticeMetal
   import Metal
 #endif
 
-// A minimal "physics" component pair, standing in for the kind of thing a
-// game or simulation would update every frame at scale.
+/// A minimal "physics" component pair, standing in for the kind of thing a
+/// game or simulation would update every frame at scale.
 struct Transform: LatticeComponent
 {
   var x: Float
@@ -43,6 +45,23 @@ let entityCount = 100_000
 let frames = 120
 let dt: Float = 1.0 / 60.0
 
+/// Per-entity ALU work each frame does. Cranked up so integration is
+/// compute-bound rather than memory-bound - the scenario where the GPU's raw
+/// throughput actually beats the CPU. A trivial add is dominated by memory and
+/// dispatch overhead, and the GPU loses; heavier math is where it pulls ahead.
+let heavyWorkIterations = 32
+
+/// The GPU folds this many simulation frames into a single dispatch, so the
+/// fixed per-command-buffer cost is paid once per batch instead of once per
+/// frame. `frames` need not be a multiple - the last batch just runs shorter.
+let framesPerDispatch = 30
+
+/// The USD benchmark authors one real prim (with attributes) per entity. It
+/// matches `entityCount` so its CPU/GPU numbers line up with the synthetic
+/// demo's - the frame loop it feeds is identical; only the data's provenance
+/// (loaded from a USD stage vs. spawned directly) differs.
+let usdEntityCount = entityCount
+
 /// Timings from the CPU demo, so the GPU demo can compare against both the
 /// serial baseline and the (fairer, harder-to-beat) parallel one.
 struct CPUTimings
@@ -51,11 +70,28 @@ struct CPUTimings
   var parallelElapsed: TimeInterval
 }
 
+/// One heavy, ALU-bound integration step: repeatedly rotates a local copy of the
+/// velocity with trig and folds a `sqrt` into the position, so the per-entity
+/// cost is real compute rather than a single memory-bound add. The CPU path and
+/// the Metal kernel (`metalShaderSource`) run identical math; results agree only
+/// to a few significant figures since the GPU runs with fast math (peak
+/// throughput) while the CPU uses libm's IEEE `sin`/`cos`/`sqrt`.
 func integrate(_ transform: inout Transform, _ velocity: Velocity)
 {
-  transform.x += velocity.dx * dt
-  transform.y += velocity.dy * dt
-  transform.z += velocity.dz * dt
+  var x = transform.x
+  var y = transform.y
+  var z = transform.z
+  var dx = velocity.dx
+  var dy = velocity.dy
+  for _ in 0 ..< heavyWorkIterations
+  {
+    dx += sin(dx) * dt
+    dy += cos(dy) * dt
+    x += dx * dt
+    y += dy * dt
+    z += (dx * dx + dy * dy).squareRoot() * dt * 0.001
+  }
+  transform = Transform(x: x, y: y, z: z)
 }
 
 func printTransform(_ label: String, _ transform: Transform)
@@ -116,42 +152,73 @@ func runCPUDemo() -> CPUTimings
 
 #if canImport(Metal)
   let metalShaderSource = """
-  #include <metal_stdlib>
-  using namespace metal;
+    #include <metal_stdlib>
+    using namespace metal;
 
-  struct Transform
-  {
-    float x;
-    float y;
-    float z;
-  };
+    struct Transform
+    {
+      float x;
+      float y;
+      float z;
+    };
 
-  struct Velocity
-  {
-    float dx;
-    float dy;
-    float dz;
-  };
+    struct Velocity
+    {
+      float dx;
+      float dy;
+      float dz;
+    };
 
-  kernel void integrate(
-    device Transform *transforms [[buffer(0)]],
-    const device Velocity *velocities [[buffer(1)]],
-    constant float &dt [[buffer(2)]],
-    constant uint &count [[buffer(3)]],
-    uint id [[thread_position_in_grid]]
-  )
-  {
-    if (id >= count) { return; }
+    kernel void integrate(
+      device Transform *transforms [[buffer(0)]],
+      const device Velocity *velocities [[buffer(1)]],
+      constant float &dt [[buffer(2)]],
+      constant uint &count [[buffer(3)]],
+      constant uint &stepsPerDispatch [[buffer(4)]],
+      constant uint &heavyIterations [[buffer(5)]],
+      uint id [[thread_position_in_grid]]
+    )
+    {
+      if (id >= count) { return; }
 
-    transforms[id].x += velocities[id].dx * dt;
-    transforms[id].y += velocities[id].dy * dt;
-    transforms[id].z += velocities[id].dz * dt;
-  }
-  """
+      float x = transforms[id].x;
+      float y = transforms[id].y;
+      float z = transforms[id].z;
+      const float startDx = velocities[id].dx;
+      const float startDy = velocities[id].dy;
+
+      // One dispatch advances the entity by `stepsPerDispatch` frames, each an
+      // identical heavy step to the CPU's `integrate`.
+      for (uint f = 0; f < stepsPerDispatch; ++f)
+      {
+        float dx = startDx;
+        float dy = startDy;
+        for (uint k = 0; k < heavyIterations; ++k)
+        {
+          dx += sin(dx) * dt;
+          dy += cos(dy) * dt;
+          x += dx * dt;
+          y += dy * dt;
+          z += sqrt(dx * dx + dy * dy) * dt * 0.001;
+        }
+      }
+
+      transforms[id].x = x;
+      transforms[id].y = y;
+      transforms[id].z = z;
+    }
+    """
 
   func makeComputePipeline(device: MTLDevice) throws -> MTLComputePipelineState
   {
-    let library = try device.makeLibrary(source: metalShaderSource, options: nil)
+    // Fast math left ON - this is a peak-throughput benchmark (the scenario a
+    // production Fabric/USDRT GPU kernel runs in), so we don't handicap the GPU
+    // for IEEE parity. The trade-off is that the GPU's trig/sqrt approximations
+    // drift from the CPU's libm results, so the CPU/GPU spot-checks below agree
+    // only to a few significant figures - expected, not a bug.
+    let options = MTLCompileOptions()
+    options.fastMathEnabled = true
+    let library = try device.makeLibrary(source: metalShaderSource, options: options)
     guard let function = library.makeFunction(name: "integrate")
     else
     {
@@ -182,10 +249,12 @@ func runCPUDemo() -> CPUTimings
       }
 
       let store = LatticeStore()
-      store.register(Transform.self) {
+      store.register(Transform.self)
+      {
         MetalBackedColumn<Transform>(device: device, initialCapacity: entityCount)
       }
-      store.register(Velocity.self) {
+      store.register(Velocity.self)
+      {
         MetalBackedColumn<Velocity>(device: device, initialCapacity: entityCount)
       }
 
@@ -203,7 +272,8 @@ func runCPUDemo() -> CPUTimings
 
       let query = store.query(Transform.self, Velocity.self)
       var queriedColumnPairs: [(MetalBackedColumn<Transform>, MetalBackedColumn<Velocity>)] = []
-      query.forEachColumnPair { transformStorage, velocityStorage in
+      query.forEachColumnPair
+      { transformStorage, velocityStorage in
         guard let transformColumn = transformStorage as? MetalBackedColumn<Transform>,
               let velocityColumn = velocityStorage as? MetalBackedColumn<Velocity>
         else { return }
@@ -220,6 +290,7 @@ func runCPUDemo() -> CPUTimings
 
       var frameDelta = dt
       var componentCount = UInt32(entityCount)
+      var heavyIterations = UInt32(heavyWorkIterations)
       let threadsPerThreadgroup = MTLSize(
         width: min(pipeline.maxTotalThreadsPerThreadgroup, 256),
         height: 1,
@@ -232,8 +303,11 @@ func runCPUDemo() -> CPUTimings
       )
 
       let gpuStart = Date()
-      for _ in 0 ..< frames
+      var remainingFrames = frames
+      while remainingFrames > 0
       {
+        // Fold up to `framesPerDispatch` frames into this one command buffer.
+        var stepsThisDispatch = UInt32(min(framesPerDispatch, remainingFrames))
         for (transformColumn, velocityColumn) in queriedColumnPairs
         {
           guard let commandBuffer = commandQueue.makeCommandBuffer(),
@@ -251,6 +325,8 @@ func runCPUDemo() -> CPUTimings
           encoder.setBuffer(velocityColumn.metalBuffer, offset: 0, index: 1)
           encoder.setBytes(&frameDelta, length: MemoryLayout<Float>.stride, index: 2)
           encoder.setBytes(&componentCount, length: MemoryLayout<UInt32>.stride, index: 3)
+          encoder.setBytes(&stepsThisDispatch, length: MemoryLayout<UInt32>.stride, index: 4)
+          encoder.setBytes(&heavyIterations, length: MemoryLayout<UInt32>.stride, index: 5)
           encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
           encoder.endEncoding()
           commandBuffer.commit()
@@ -258,6 +334,7 @@ func runCPUDemo() -> CPUTimings
           transformColumn.markWholeColumnChanged(tick: store.currentTick)
         }
         store.advanceFrame()
+        remainingFrames -= Int(stepsThisDispatch)
       }
       let gpuElapsed = Date().timeIntervalSince(gpuStart)
 
@@ -289,6 +366,247 @@ enum DemoError: Error
   case missingMetalFunction(String)
 }
 
+// MARK: - USD-populated benchmark
+
+/// Builds a USD stage of `primCount` prims, each carrying a `xformOp:translate`
+/// and a `velocity` (both `float3`) - the same two fields the integration
+/// kernel drives, so the store can be populated straight from USD and then
+/// simulated on CPU and GPU.
+///
+/// The stage is written as a `.usda` layer and opened in one shot rather than
+/// authored prim-by-prim on a live stage: USD recomposes on every live edit, so
+/// incremental authoring is orders of magnitude slower and would cap how many
+/// prims the demo can afford. A one-shot load composes once - faster, and closer
+/// to how a real pipeline gets its stage.
+func makeUSDStage(primCount: Int) -> UsdStage
+{
+  // `xformOp:translate` is a UsdGeomXformable schema attribute (no `custom`
+  // keyword); `velocity` is genuinely user-defined, so it's marked `custom`.
+  var usda = "#usda 1.0\n\n"
+  usda.reserveCapacity(primCount * 96)
+  for i in 0 ..< primCount
+  {
+    usda += "def \"prim\(i)\"\n{\n"
+    usda += "    float3 xformOp:translate = (\(i), 0, 0)\n"
+    usda += "    custom float3 velocity = (1, 0.5, 0)\n"
+    usda += "}\n\n"
+  }
+
+  let url = FileManager.default.temporaryDirectory.appendingPathComponent("lattice-usd-demo.usda")
+  try? usda.write(to: url, atomically: true, encoding: .utf8)
+  return Usd.Stage.open(url.path)
+}
+
+/// Binds one entity per prim and pulls `xformOp:translate`/`velocity` into
+/// `Transform`/`Velocity` columns. Register any custom (e.g. Metal-backed)
+/// columns on `store` *before* calling this. Returns the path table so callers
+/// can look an entity up by prim path for spot-checks.
+@discardableResult
+func populateFromUSD(into store: LatticeStore, source: USDStageSource) -> LatticePathTable
+{
+  let paths = LatticePathTable()
+  let sync = USDPopulationSync(store: store, paths: paths, source: source)
+  sync.syncAll()
+  sync.populate(Transform.self, from: "xformOp:translate")
+  { value in
+    guard case let .float3(x, y, z) = value else { return nil }
+    return Transform(x: x, y: y, z: z)
+  }
+  sync.populate(Velocity.self, from: "velocity")
+  { value in
+    guard case let .float3(dx, dy, dz) = value else { return nil }
+    return Velocity(dx: dx, dy: dy, dz: dz)
+  }
+  return paths
+}
+
+/// End-to-end USD benchmark: author a stage, populate a `LatticeStore` from a
+/// real ``USDStageSource``, then run the same integration serial, parallel, and
+/// on the GPU.
+func runUSDDemo()
+{
+  // register all USD plugin resources.
+  Pixar.Bundler.shared.setup(.resources)
+
+  // building + opening the .usda stage is pure USD fixture setup, not a Lattice
+  // cost, so it's deliberately not timed or reported. announced up front so any
+  // pause reads as USD work, not Lattice.
+  print("")
+  print("Authoring a new USD stage with \(usdEntityCount) prims...")
+  let stage = makeUSDStage(primCount: usdEntityCount)
+  let source = USDStageSource(stage: stage)
+
+  print("")
+  print("Lattice demo (USD population -> CPU)")
+  
+  let store = LatticeStore()
+  let populateStart = Date()
+  let paths = populateFromUSD(into: store, source: source)
+  let populateElapsed = Date().timeIntervalSince(populateStart)
+
+  // serial and parallel baselines, both over the USD-populated store, so the
+  // GPU run below has a same-workload, same-entity-count comparison.
+  let query = store.query(Transform.self, Velocity.self)
+  let serialStart = Date()
+  for _ in 0 ..< frames
+  {
+    query.forEachMutatingFirst { _, transform, velocity in integrate(&transform, velocity) }
+    store.advanceFrame()
+  }
+  let serialElapsed = Date().timeIntervalSince(serialStart)
+
+  let parallelStart = Date()
+  for _ in 0 ..< frames
+  {
+    query.forEachMutatingFirstParallel { transform, velocity in integrate(&transform, velocity) }
+    store.advanceFrame()
+  }
+  let parallelElapsed = Date().timeIntervalSince(parallelStart)
+
+  print("Prims authored:              \(usdEntityCount)")
+  print("Entities populated:          \(store.entityCount)")
+  print("Frames:                      \(frames)")
+  print("USD -> store populate:       \(String(format: "%.5f", populateElapsed * 1000))ms")
+  print("Serial   per-frame avg:      \(String(format: "%.5f", serialElapsed / Double(frames) * 1000))ms")
+  print("Parallel per-frame avg:      \(String(format: "%.5f", parallelElapsed / Double(frames) * 1000))ms")
+  print("Parallel speedup vs serial:  \(String(format: "%.2f", serialElapsed / parallelElapsed))x")
+
+  if let prim0 = paths.entity(for: "/prim0"), let sample = store.get(Transform.self, for: prim0)
+  {
+    printTransform("/prim0.Transform after \(frames * 2) CPU frames", sample)
+  }
+
+  #if canImport(Metal)
+    guard let device = MTLCreateSystemDefaultDevice()
+    else
+    {
+      print("")
+      print("Lattice demo (USD population -> GPU)")
+      print("Metal unavailable: no default MTLDevice")
+      return
+    }
+
+    do
+    {
+      let pipeline = try makeComputePipeline(device: device)
+      guard let commandQueue = device.makeCommandQueue()
+      else
+      {
+        print("")
+        print("Lattice demo (USD population -> GPU)")
+        print("Metal unavailable: failed to create command queue")
+        return
+      }
+
+      // metal-backed columns must be registered before population so the pulled
+      // USD values land straight in the MTLBuffer the compute pass will bind.
+      let gpuStore = LatticeStore()
+      gpuStore.register(Transform.self)
+      {
+        MetalBackedColumn<Transform>(device: device, initialCapacity: usdEntityCount)
+      }
+      gpuStore.register(Velocity.self)
+      {
+        MetalBackedColumn<Velocity>(device: device, initialCapacity: usdEntityCount)
+      }
+
+      let gpuPopulateStart = Date()
+      let gpuPaths = populateFromUSD(into: gpuStore, source: source)
+      let gpuPopulateElapsed = Date().timeIntervalSince(gpuPopulateStart)
+
+      var queriedColumnPairs: [(MetalBackedColumn<Transform>, MetalBackedColumn<Velocity>)] = []
+      gpuStore.query(Transform.self, Velocity.self).forEachColumnPair
+      { transformStorage, velocityStorage in
+        guard let transformColumn = transformStorage as? MetalBackedColumn<Transform>,
+              let velocityColumn = velocityStorage as? MetalBackedColumn<Velocity>
+        else { return }
+        queriedColumnPairs.append((transformColumn, velocityColumn))
+      }
+
+      guard !queriedColumnPairs.isEmpty
+      else
+      {
+        print("")
+        print("Lattice demo (USD population -> GPU)")
+        print("Metal unavailable: query did not find Metal-backed columns")
+        return
+      }
+
+      var frameDelta = dt
+      var componentCount = UInt32(usdEntityCount)
+      var heavyIterations = UInt32(heavyWorkIterations)
+      let threadsPerThreadgroup = MTLSize(
+        width: min(pipeline.maxTotalThreadsPerThreadgroup, 256),
+        height: 1,
+        depth: 1
+      )
+
+      let gpuStart = Date()
+      var remainingFrames = frames
+      while remainingFrames > 0
+      {
+        // Fold up to `framesPerDispatch` frames into this one command buffer.
+        var stepsThisDispatch = UInt32(min(framesPerDispatch, remainingFrames))
+        for (transformColumn, velocityColumn) in queriedColumnPairs
+        {
+          guard let commandBuffer = commandQueue.makeCommandBuffer(),
+                let encoder = commandBuffer.makeComputeCommandEncoder()
+          else
+          {
+            print("")
+            print("Lattice demo (USD population -> GPU)")
+            print("Metal unavailable: failed to encode compute work")
+            return
+          }
+
+          componentCount = UInt32(transformColumn.count)
+          let threadgroups = MTLSize(
+            width: (transformColumn.count + threadsPerThreadgroup.width - 1) / threadsPerThreadgroup.width,
+            height: 1,
+            depth: 1
+          )
+          encoder.setComputePipelineState(pipeline)
+          encoder.setBuffer(transformColumn.metalBuffer, offset: 0, index: 0)
+          encoder.setBuffer(velocityColumn.metalBuffer, offset: 0, index: 1)
+          encoder.setBytes(&frameDelta, length: MemoryLayout<Float>.stride, index: 2)
+          encoder.setBytes(&componentCount, length: MemoryLayout<UInt32>.stride, index: 3)
+          encoder.setBytes(&stepsThisDispatch, length: MemoryLayout<UInt32>.stride, index: 4)
+          encoder.setBytes(&heavyIterations, length: MemoryLayout<UInt32>.stride, index: 5)
+          encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
+          encoder.endEncoding()
+          commandBuffer.commit()
+          commandBuffer.waitUntilCompleted()
+          transformColumn.markWholeColumnChanged(tick: gpuStore.currentTick)
+        }
+        gpuStore.advanceFrame()
+        remainingFrames -= Int(stepsThisDispatch)
+      }
+      let gpuElapsed = Date().timeIntervalSince(gpuStart)
+
+      print("")
+      print("Lattice demo (USD population -> GPU)")
+      print("Entities populated:          \(gpuStore.entityCount)")
+      print("Frames:                      \(frames)")
+      print("USD -> store populate:       \(String(format: "%.5f", gpuPopulateElapsed * 1000))ms")
+      print("Compute per-frame avg:       \(String(format: "%.5f", gpuElapsed / Double(frames) * 1000))ms")
+      print("GPU speedup vs serial:       \(String(format: "%.2f", serialElapsed / gpuElapsed))x")
+      print("GPU speedup vs parallel:     \(String(format: "%.2f", parallelElapsed / gpuElapsed))x")
+      print("Device:                      \(device.name)")
+
+      if let prim0 = gpuPaths.entity(for: "/prim0"), let sample = gpuStore.get(Transform.self, for: prim0)
+      {
+        printTransform("/prim0.Transform after \(frames) GPU frames", sample)
+      }
+    }
+    catch
+    {
+      print("")
+      print("Lattice demo (USD population -> GPU)")
+      print("Metal unavailable: \(error)")
+    }
+  #endif
+}
+
 let cpuTimings = runCPUDemo()
 #if canImport(Metal)
   runGPUDemo(cpuTimings: cpuTimings)
@@ -297,3 +615,5 @@ let cpuTimings = runCPUDemo()
   print("Lattice demo (GPU)")
   print("Metal unavailable: this platform cannot import Metal")
 #endif
+
+runUSDDemo()

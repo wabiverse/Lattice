@@ -12,8 +12,8 @@
 
 import Lattice
 
-/// Populates a ``LatticeStore`` from a ``USDStageSource``, the way USDRT
-/// populates Fabric on first touch rather than mirroring the whole stage
+/// Populates a ``LatticeStore`` from a ``USDStageSourceRepresentable``,
+/// the way USDRT populates Fabric on first touch rather than mirroring the whole stage
 /// eagerly.
 ///
 /// This implementation does a full pull every time `syncAll()` is
@@ -27,7 +27,7 @@ public final class USDPopulationSync
 {
   private let store: LatticeStore
   private let paths: LatticePathTable
-  private let source: USDStageSource
+  private let source: USDStageSourceRepresentable
   /// The prim-path set observed at the last ``syncIncremental()``, so the next
   /// call can diff against it instead of re-walking from scratch.
   private var lastSeenPaths: Set<String> = []
@@ -50,7 +50,7 @@ public final class USDPopulationSync
     }
   }
 
-  public init(store: LatticeStore, paths: LatticePathTable, source: USDStageSource)
+  public init(store: LatticeStore, paths: LatticePathTable, source: USDStageSourceRepresentable)
   {
     self.store = store
     self.paths = paths

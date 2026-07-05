@@ -156,7 +156,7 @@
     {
       ticks[index]
     }
-    
+
     public func markWholeColumnChanged(tick: UInt64)
     {
       mutationGeneration &+= 1
@@ -177,7 +177,7 @@
     @inline(__always)
     public func withUnsafeMutableBufferPointer<R>(_ body: (UnsafeMutableBufferPointer<T>) throws -> R) rethrows -> R
     {
-      return try body(UnsafeMutableBufferPointer(start: typedPointer(), count: count))
+      try body(UnsafeMutableBufferPointer(start: typedPointer(), count: count))
     }
 
     @discardableResult

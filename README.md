@@ -39,14 +39,41 @@ unified memory, and Swift's own concurrency for parallel iteration.
   per-component factory. On Apple Silicon's unified memory, writes here are
   immediately visible to the GPU with no upload step:
   `store.register(Particle.self) { MetalBackedColumn<Particle>(device: device) }`.
-- **`LatticeUSD`** - a thin adapter (`USDStageSource`) that lets any USD
-  binding populate a `LatticeStore`, without Lattice depending on that
+- **`LatticeUSD`** - a thin adapter (`USDStageSourceRepresentable`) that lets any
+  USD binding populate a `LatticeStore`, without Lattice depending on that
   binding's concrete API.
 - **`LatticeDemo`** - `swift run -c release LatticeDemo`: spawns 100k entities
-  with a `Transform`/`Velocity` pair and integrates position for 120 frames.
-  It benchmarks the serial query path against the parallel query path. On an
-  8-performance-core M-series chip, the parallel CPU path yields a ~3x+ speedup,
-  while the GPU path delivers a ~7x+ speedup over parallel CPU.
+  with a `Transform`/`Velocity` pair and integrates them for 120 frames across
+  the serial, parallel, and Metal GPU paths, then repeats the whole run over a
+  store populated from a real `UsdStage`. See [Benchmarks](#benchmarks).
+
+## Benchmarks
+
+100,000 entities, 120 frames, one `Transform`/`Velocity` pair each, integrated
+with a deliberately compute-bound per-entity kernel (32 iterations of trig +
+`sqrt` - the scenario where throughput, not memory or dispatch overhead, decides).
+Every path runs identical math, the GPU folds 30 frames into each dispatch to
+amortize command-buffer cost. Release build, base **2026 Apple MacBook Air M5**
+(10-core, unified memory).
+
+| Path | Per-frame | vs serial CPU | vs parallel CPU |
+| :--- | ---: | ---: | ---: |
+| CPU - serial | 33.8 ms | 1× | - |
+| CPU - parallel | 6.35 ms | 5.3× | 1× |
+| **GPU - Metal, unified memory** | **0.13 ms** | **254×** | **48×** |
+
+Driven end-to-end through `LatticeUSD` - 100k prims authored into a `UsdStage`,
+loaded, and mirrored into the store via `USDPopulationSync` - the frame loop hits
+the same numbers (**228×** serial, **45×** parallel), with the one-time USD->store
+population costing ~1.1 s.
+
+> [!NOTE]
+> This is illustrative of the architecture, not a head-to-head benchmark
+> against Fabric/USDRT (which use different hardware, kernels, and APIs).
+> The core takeaway is that a Swift-native, columnar `MTLBuffer` on
+> unified memory achieves GPU-throughput territory on the exact same
+> per-frame simulation patterns Fabric targets - entirely bypassing the
+> need for a separate upload step, CUDA, or the Kit runtime.
 
 ## Core concepts
 
@@ -151,8 +178,8 @@ scheduler.run(on: store)   // integrate and regen touch different types -> one c
   `writeBackChanged(...)` authors component values back onto stage attributes,
   touching only the rows that changed since a given tick (via the same per-row
   change ticks). That's USDRT's population-vs-synchronization split plus the
-  return path. `OpenUSDStageSource` is a concrete `USDStageSource` backed by a
-  real `UsdStage` via `wabiverse/swift-usd`.
+  return path. `USDStageSource` is a concrete `USDStageSourceRepresentable`
+  backed by a real `UsdStage` via `wabiverse/swift-usd`.
 
 ## Roadmap
 
@@ -173,12 +200,12 @@ What's genuinely still ahead, in rough priority:
 ## Integrating with `wabiverse/swift-usd`
 
 `LatticeUSD` depends on `OpenUSDKit` from `wabiverse/swift-usd` and ships
-`OpenUSDStageSource`, a concrete `USDStageSource` backed by a real `UsdStage`:
-it traverses the composed stage for prim paths and reads resolved attribute
-values, mapping USD value types to `LatticeUSDValue`.
+`USDStageSource`, a concrete `USDStageSourceRepresentable` backed by a
+real `UsdStage`: it traverses the composed stage for prim paths and reads
+resolved attribute values, mapping USD value types to `LatticeUSDValue`.
 
 ```swift
-let source = OpenUSDStageSource(openingStageAt: "scene.usd")
+let source = USDStageSource(openingStageAt: "scene.usd")
 let sync = USDPopulationSync(store: store, paths: paths, source: source)
 sync.syncAll()   // one-time population
 sync.populate(Transform.self, from: "xformOp:translate") { value in

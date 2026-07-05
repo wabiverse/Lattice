@@ -47,7 +47,15 @@ let package = Package(
       name: "LatticeDemo",
       dependencies: [
         .target(name: "Lattice"),
-        .target(name: "LatticeMetal")
+        .target(name: "LatticeMetal"),
+        .target(name: "LatticeUSD"),
+        .product(name: "OpenUSDKit", package: "swift-usd")
+      ],
+      cxxSettings: [
+        .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")
+      ],
+      swiftSettings: [
+        .interoperabilityMode(.Cxx)
       ]
     ),
 
@@ -65,7 +73,8 @@ let package = Package(
       name: "LatticeUSDTests",
       dependencies: [
         .target(name: "Lattice"),
-        .target(name: "LatticeUSD")
+        .target(name: "LatticeUSD"),
+        .product(name: "OpenUSDKit", package: "swift-usd")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")
