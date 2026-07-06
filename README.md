@@ -216,9 +216,13 @@ sync.populate(Transform.self, from: "xformOp:translate") { value in
 sync.syncIncremental()   // spawns/despawns only the delta
 ```
 
-If we extend `ExecUsdSystem` to also write its computed values (posed
-transforms, bounds) into a `LatticeStore` - rather than only handing an
-`ExecUsdCacheView` back to a caller - we could get something Fabric and
-USD's own execution system don't currently share: one store that both
-holds bulk runtime data *and* receives computed values from the same
-invalidation graph that already knows when to recompute them.
+If we extend `ExecUsdSystem` to write its computed values (posed
+transforms, bounds) into a `LatticeStore` - rather than only handing
+back an `ExecUsdCacheView` - we'd close a real gap. OpenExec does
+not currently author values back into scene description, it only
+observes the stage and returns results via a cache view. Fabric
+gets store-plus-invalidation writes today, but through OmniGraph,
+not OpenExec. I haven't found anything public that pairs Pixar's
+own schema-aware execution system with a Fabric-style store - if
+that exists already, I'd love to know - but if not, this would
+give OpenExec's invalidation graph a real place to write.
