@@ -115,6 +115,63 @@ public final class USDPopulationSync
     return SyncDelta(added: added, removed: removed)
   }
 
+  /// Fabric-style prefetch: mirrors into the store only the attributes whose
+  /// names satisfy `matches`, and brings a prim in *only* when it carries at
+  /// least one such attribute with a resolvable value. Each mirrored attribute
+  /// lands in its own dense, runtime-named column
+  /// (``LatticeStore/setDynamic(_:forKey:on:)``), keyed by attribute name.
+  /// Returns the total number of attribute values mirrored.
+  ///
+  /// This is the population model Fabric actually uses, and the reason it
+  /// exists: a prim enters Fabric because something *prefetched or queried*
+  /// specific attributes on it - not because a runtime eagerly copied every
+  /// attribute of every prim (the worst case Fabric is designed to avoid). So
+  /// prims touching none of the requested attributes never get an entity, and
+  /// attributes outside the working set are never read. Pass a predicate that
+  /// describes the bounded set a system needs this frame - transforms,
+  /// geometry, the primvars a draw reads - e.g. `{ $0.hasPrefix("xformOp:") ||
+  /// $0 == "points" }`.
+  ///
+  /// Unlike ``syncAll()``, this does not bind an entity per prim up front; the
+  /// path<->entity binding is created lazily, at the moment a prefetched
+  /// attribute is found. Safe to call after `syncAll()`/`syncIncremental()`
+  /// too - an already-bound prim reuses its entity.
+  @discardableResult
+  public func prefetch(where matches: (_ attributeName: String) -> Bool) -> Int
+  {
+    var mirrored = 0
+    for path in source.primPaths()
+    {
+      let requested = source.attributeNames(at: path).filter(matches)
+      guard !requested.isEmpty else { continue }
+
+      // The prim's entity is created lazily, only once a requested attribute
+      // actually resolves to a value - so a prim advertising a name but with no
+      // authored/fallback value still doesn't enter the store.
+      var entity: LatticeEntity? = paths.entity(for: path)
+      for name in requested
+      {
+        guard let value = source.attributeValue(at: path, attribute: name) else { continue }
+
+        let bound: LatticeEntity
+        if let entity
+        {
+          bound = entity
+        }
+        else
+        {
+          bound = store.spawn()
+          paths.bind(bound, to: path)
+          entity = bound
+        }
+
+        store.setDynamic(value, forKey: name, on: bound)
+        mirrored += 1
+      }
+    }
+    return mirrored
+  }
+
   /// Convenience for callers hand-rolling their own component population
   /// loop, rather than waiting on a generic schema-driven sync path.
   public func value(at path: String, attribute name: String) -> LatticeUSDValue?

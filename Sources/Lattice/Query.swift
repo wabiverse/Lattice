@@ -200,10 +200,10 @@ public struct Query2<A: LatticeComponent, B: LatticeComponent>
     }
   }
 
-  /// Parallel counterpart to ``forEachMutatingFirst``: splits each matching
-  /// archetype's rows into contiguous batches and runs them across the global
-  /// concurrent queue. Each worker owns a disjoint row range, so mutating `A`
-  /// while reading `B` needs no locking.
+  /// Parallel counterpart to ``forEachMutatingFirst(_:)``: splits each
+  /// matching archetype's rows into contiguous batches and runs them across
+  /// the global concurrent queue. Each worker owns a disjoint row range, so
+  /// mutating `A` while reading `B` needs no locking.
   ///
   /// This is where Lattice's columnar layout pays off the way Fabric's does:
   /// a per-frame simulation pass over hundreds of thousands of entities is

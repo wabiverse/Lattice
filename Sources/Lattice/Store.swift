@@ -47,6 +47,15 @@ public final class LatticeStore
   /// overrides it (e.g. to GPU-backed storage).
   private var columnFactories: [ComponentTypeID: () -> any ColumnStorage] = [:]
 
+  /// Stable identity tokens for dynamic, runtime-named columns. A schema-less
+  /// source - a `UsdStage`'s attributes, say - names its fields with strings,
+  /// not Swift types, so there's no `ObjectIdentifier(T.self)` to key their
+  /// columns on. Interning one token object per name gives each name a stable
+  /// ``ComponentTypeID`` (`ObjectIdentifier(token)`) that drops into the exact
+  /// same archetype/column machinery every static component already uses.
+  private final class DynamicColumnKey {}
+  private var dynamicColumnKeys: [String: DynamicColumnKey] = [:]
+
   /// Frame counter, bumped once per tick by whoever drives the main loop.
   /// Lattice doesn't use this internally yet; it's exposed so systems can
   /// stamp "last ran at frame N" style book keeping without each one
@@ -254,13 +263,23 @@ public final class LatticeStore
   /// into the archetype for its old signature plus `T`.
   public func set<T: LatticeComponent>(_ component: T, on entity: LatticeEntity)
   {
+    ensureRegistered(T.self)
+    setValue(component, typeID: ObjectIdentifier(T.self), on: entity)
+  }
+
+  /// Shared body of ``set(_:on:)`` and ``setDynamic(_:forKey:on:)``: writes
+  /// `component` into the column identified by `typeID`, overwriting in place
+  /// if the entity's archetype already has that column, otherwise moving the
+  /// entity into the archetype that adds it. The caller must have registered a
+  /// column factory and copier for `typeID` first.
+  private func setValue<T: LatticeComponent>(_ component: T, typeID: ComponentTypeID, on entity: LatticeEntity)
+  {
     guard isAlive(entity), let location = locations[entity.index] else { return }
     let currentArchetype = archetypes[location.archetypeIndex]
-    let typeID = ObjectIdentifier(T.self)
 
     if currentArchetype.signature.contains(typeID)
     {
-      if let column = currentArchetype.column(T.self)
+      if let column: any TypedColumnStorage<T> = currentArchetype.column(id: typeID)
       {
         column.set(location.row, component)
         column.stamp(location.row, tick: currentTick)
@@ -268,14 +287,71 @@ public final class LatticeStore
       return
     }
 
-    ensureRegistered(T.self)
-    let factory = columnFactory(for: T.self)
-
+    let factory = columnFactories[typeID] ?? { TypedColumn<T>() }
     moveEntity(entity, from: location, addingSignature: typeID)
     { newArchetype in
-      let column = newArchetype.ensureColumn(T.self, factory: factory)
+      let column: any TypedColumnStorage<T> = newArchetype.ensureColumn(id: typeID, factory: factory)
       let row = column.append(component)
       column.stamp(row, tick: self.currentTick)
+    }
+  }
+
+  // MARK: - Dynamic (runtime-named) columns
+
+  /// Sets a value in the column named `key`, creating that column on first use.
+  ///
+  /// This is the runtime-named counterpart to ``set(_:on:)``: where `set` keys
+  /// the column on the Swift type `T`, this keys it on a string. A source whose
+  /// schema is only known at runtime - the attributes on a `UsdStage`, say -
+  /// can then land each named field in its own dense column (one column per
+  /// name, the entity as the row), exactly the layout a static component gets
+  /// and the same layout Fabric uses to mirror a stage. Every value written
+  /// under the same `key` must share the element type `T`.
+  public func setDynamic<T: LatticeComponent>(_ value: T, forKey key: String, on entity: LatticeEntity)
+  {
+    let typeID = dynamicTypeID(for: key)
+    ensureRegisteredDynamic(T.self, typeID: typeID)
+    setValue(value, typeID: typeID, on: entity)
+  }
+
+  /// Reads the value in the column named `key` for `entity`, or `nil` if it has
+  /// none. The runtime-named counterpart to ``get(_:for:)``.
+  public func getDynamic<T: LatticeComponent>(_: T.Type, forKey key: String, for entity: LatticeEntity) -> T?
+  {
+    guard let token = dynamicColumnKeys[key],
+          isAlive(entity), let location = locations[entity.index]
+    else { return nil }
+    let column: (any TypedColumnStorage<T>)? = archetypes[location.archetypeIndex].column(id: ObjectIdentifier(token))
+    return column?.get(location.row)
+  }
+
+  /// The interned ``ComponentTypeID`` for a dynamic column name, minting a
+  /// stable token on first use so the id is identical every later time the same
+  /// name is set or read.
+  private func dynamicTypeID(for key: String) -> ComponentTypeID
+  {
+    if let token = dynamicColumnKeys[key]
+    {
+      return ObjectIdentifier(token)
+    }
+    let token = DynamicColumnKey()
+    dynamicColumnKeys[key] = token
+    return ObjectIdentifier(token)
+  }
+
+  /// Registers the column factory and archetype-move copier for a dynamic
+  /// column id the first time it's seen - the runtime-named analogue of
+  /// ``register(_:columnFactory:)``, keyed on the interned id instead of
+  /// `ObjectIdentifier(T.self)` and reading/writing its column by that id.
+  private func ensureRegisteredDynamic<T: LatticeComponent>(_: T.Type, typeID: ComponentTypeID)
+  {
+    guard columnFactories[typeID] == nil else { return }
+    let factory: () -> any ColumnStorage = { TypedColumn<T>() }
+    columnFactories[typeID] = factory
+    componentCopiers[typeID] = { oldArchetype, row, newArchetype in
+      guard let source: any TypedColumnStorage<T> = oldArchetype.column(id: typeID) else { return }
+      let destination: any TypedColumnStorage<T> = newArchetype.ensureColumn(id: typeID, factory: factory)
+      _ = destination.appendPreservingTick(source.get(row), tick: source.changeTick(at: row))
     }
   }
 

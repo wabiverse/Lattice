@@ -133,7 +133,8 @@ func runCPUDemo() -> CPUTimings
     store.advanceFrame()
   }
   let parallelElapsed = Date().timeIntervalSince(parallelStart)
-
+  
+  print("")
   print("Lattice demo (CPU)")
   print("Entities:                    \(entityCount)")
   print("Frames:                      \(frames)")
@@ -366,6 +367,98 @@ enum DemoError: Error
   case missingMetalFunction(String)
 }
 
+// MARK: - Memory instrumentation
+
+/// The process's resident memory footprint in bytes, as reported by Mach's
+/// `phys_footprint` - the same figure Activity Monitor shows under "Memory"
+/// and the number that actually matters for "how much RAM is this using".
+/// Returns 0 if the kernel query fails.
+func currentMemoryFootprint() -> UInt64
+{
+  var info = task_vm_info_data_t()
+  var count = mach_msg_type_number_t(
+    MemoryLayout<task_vm_info_data_t>.stride / MemoryLayout<integer_t>.stride
+  )
+  let result = withUnsafeMutablePointer(to: &info)
+  { pointer in
+    pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count))
+    { intPointer in
+      task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), intPointer, &count)
+    }
+  }
+  return result == KERN_SUCCESS ? UInt64(info.phys_footprint) : 0
+}
+
+/// Human-readable byte count, MB above a mebibyte and KB below it.
+func formatBytes(_ bytes: UInt64) -> String
+{
+  let mb = Double(bytes) / (1024 * 1024)
+  if mb >= 1 { return String(format: "%.2f MB", mb) }
+  return String(format: "%.1f KB", Double(bytes) / 1024)
+}
+
+/// Resolves the USD scene to load for the memory-factor benchmark: a
+/// `--usd <path>` command-line argument, else the `LATTICE_USD_SCENE`
+/// environment variable, else `nil` (fall back to the synthetic stage). Point
+/// either at a real scene - e.g. ALab - to measure Lattice's factor on it.
+func usdScenePathFromArguments() -> String?
+{
+  let arguments = CommandLine.arguments
+  if let index = arguments.firstIndex(of: "--usd"), index + 1 < arguments.count
+  {
+    return arguments[index + 1]
+  }
+  if let path = ProcessInfo.processInfo.environment["LATTICE_USD_SCENE"], !path.isEmpty
+  {
+    return path
+  }
+  return nil
+}
+
+/// The bounded attribute working set a renderer/sim actually prefetches into
+/// Fabric - transforms, geometry, topology, and the primvars a draw reads -
+/// rather than every attribute the scene happens to author.
+///
+/// This is the crux of modelling Fabric faithfully: Fabric does *not*
+/// auto-populate every prim. A prim (and a specific attribute on it) lands in
+/// Fabric only because something prefetched or queried it, so the resident cost
+/// tracks a working set, not the whole stage. Mirroring every attribute of
+/// every prim would reproduce the worst case Fabric is built to avoid, not its
+/// behaviour - so the memory-factor benchmark prefetches exactly this set.
+func isPrefetchedAttribute(_ name: String) -> Bool
+{
+  // Transforms: the op names vary per prim (translate/orient/scale/transform),
+  // so match the whole `xformOp:` family by prefix, plus the op ordering.
+  if name.hasPrefix("xformOp:") { return true }
+
+  return switch name
+  {
+    case "xformOpOrder",
+         "points", "normals", "extent",
+         "faceVertexIndices", "faceVertexCounts",
+         "curveVertexCounts", "widths",
+         "primvars:st", "primvars:displayColor",
+         "visibility":
+      true
+    default:
+      false
+  }
+}
+
+/// Turns Lattice "on" against a scene the way Fabric populates from a stage:
+/// a prim enters the store only because a prefetch touched one of the
+/// attributes in ``isPrefetchedAttribute(_:)`` on it, and only those attributes
+/// are mirrored - each into its own dense, runtime-named column via
+/// ``LatticeStore/setDynamic(_:forKey:on:)``, prim as the row, attribute name
+/// as the column. Returns the total number of attribute values mirrored.
+@discardableResult
+func prefetchWorkingSet(into store: LatticeStore, source: USDStageSource) -> Int
+{
+  let paths = LatticePathTable()
+  let sync = USDPopulationSync(store: store, paths: paths, source: source)
+  return sync.prefetch(where: isPrefetchedAttribute)
+}
+
 // MARK: - USD-populated benchmark
 
 /// Builds a USD stage of `primCount` prims, each carrying a `xformOp:translate`
@@ -380,8 +473,6 @@ enum DemoError: Error
 /// to how a real pipeline gets its stage.
 func makeUSDStage(primCount: Int) -> UsdStage
 {
-  // `xformOp:translate` is a UsdGeomXformable schema attribute (no `custom`
-  // keyword); `velocity` is genuinely user-defined, so it's marked `custom`.
   var usda = "#usda 1.0\n\n"
   usda.reserveCapacity(primCount * 96)
   for i in 0 ..< primCount
@@ -392,8 +483,10 @@ func makeUSDStage(primCount: Int) -> UsdStage
     usda += "}\n\n"
   }
 
-  let url = FileManager.default.temporaryDirectory.appendingPathComponent("lattice-usd-demo.usda")
+  let filename = "lattice-usd-demo-\(UUID().uuidString).usda"
+  let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
   try? usda.write(to: url, atomically: true, encoding: .utf8)
+  defer { try? FileManager.default.removeItem(at: url) }
   return Usd.Stage.open(url.path)
 }
 
@@ -606,6 +699,112 @@ func runUSDDemo()
     }
   #endif
 }
+
+// MARK: - Memory-factor benchmark
+
+/// If a USD scene costs `n` bytes resident on its own, what's the memory factor
+/// `k` once Lattice is "turned on" - populated the way Fabric would, by
+/// prefetching a bounded working set (see ``isPrefetchedAttribute(_:)``) rather
+/// than mirroring every attribute of every prim? Reports
+/// `k = (n + Lattice) / n`. Prims that carry none of the prefetched attributes
+/// never enter the store, so `entities` can be well below the prim count -
+/// exactly the selective population Fabric does, not the whole-stage worst case.
+///
+/// Runs first, before the CPU/GPU demos allocate, so the process baseline it
+/// subtracts is clean. USD's runtime is warmed on a throwaway stage beforehand
+/// so its fixed schema/plugin cost lands below the baseline and doesn't inflate
+/// the scene's marginal footprint. Point it at a real scene (e.g. ALab) with
+/// `--usd <path>` or `LATTICE_USD_SCENE`, with neither it loads the same
+/// synthetic stage the USD benchmark authors, so the demo still runs standalone.
+func runMemoryFactorDemo()
+{
+  // register all USD plugin resources.
+  Pixar.Bundler.shared.setup(.resources)
+
+  let scenePath = usdScenePathFromArguments()
+
+  // warm USD's runtime (schema registry, plugins, value-type machinery) on a
+  // tiny throwaway stage so that fixed, scene-independent cost sinks below the
+  // baseline - otherwise it would be charged to the first real scene we load.
+  do
+  {
+    let warmup = makeUSDStage(primCount: 1)
+    _ = USDStageSource(stage: warmup).primPaths()
+  }
+
+  print("")
+  print("Lattice demo (memory factor)")
+
+  // The process's resident floor before any scene is loaded.
+  let baseline = currentMemoryFootprint()
+
+  let stage: UsdStage
+  if let scenePath
+  {
+    print("Scene:                       \(scenePath)")
+    stage = Usd.Stage.open(scenePath)
+  }
+  else
+  {
+    print("Scene:                       synthetic (\(usdEntityCount) prims)")
+    stage = makeUSDStage(primCount: usdEntityCount)
+  }
+  let source = USDStageSource(stage: stage)
+
+  // warm USD value resolution for exactly the prefetched working set - the
+  // same attributes Lattice will mirror below - so the footprint we attribute
+  // to the scene already holds those resolved values. otherwise USD would
+  // lazily fault them in while Lattice mirrors and that cost would be
+  // misattributed to Lattice, overstating the factor. warming attributes we
+  // don't mirror would instead inflate the scene baseline, so we warm the
+  // working set and nothing more.
+  let primPaths = source.primPaths()
+  for path in primPaths
+  {
+    for name in source.attributeNames(at: path) where isPrefetchedAttribute(name)
+    {
+      _ = source.attributeValue(at: path, attribute: name)
+    }
+  }
+  let sceneFootprint = currentMemoryFootprint()
+
+  // turn on Lattice the way Fabric populates: prefetch the working set, so a
+  // prim enters only because one of those attributes was touched, and only
+  // those attributes are mirrored - not every attribute of every prim.
+  let store = LatticeStore()
+  let mirroredValues = prefetchWorkingSet(into: store, source: source)
+  let latticeFootprint = currentMemoryFootprint()
+
+  let sceneCost = sceneFootprint >= baseline ? sceneFootprint - baseline : 0
+  let latticeCost = latticeFootprint >= sceneFootprint ? latticeFootprint - sceneFootprint : 0
+  let entities = store.entityCount
+
+  print("Prims / prefetched entities: \(primPaths.count) / \(entities)")
+  if entities > 0
+  {
+    let perPrim = Double(mirroredValues) / Double(entities)
+    print("Attributes mirrored:         \(mirroredValues) (\(String(format: "%.1f", perPrim))/entity)")
+  }
+  print("Scene resident (n):          \(formatBytes(sceneCost))")
+  print("With Lattice on (kN):        \(formatBytes(sceneCost + latticeCost))")
+  print("Lattice added:               \(formatBytes(latticeCost))")
+  if entities > 0
+  {
+    let perEntity = Double(latticeCost) / Double(entities)
+    print("Lattice per entity:          \(String(format: "%.1f", perEntity)) bytes")
+  }
+  if sceneCost > 0
+  {
+    let k = Double(sceneCost + latticeCost) / Double(sceneCost)
+    print("Memory factor (k):           \(String(format: "%.2f", k))x")
+  }
+  else
+  {
+    print("Memory factor (k):           n/a")
+  }
+}
+
+runMemoryFactorDemo()
 
 let cpuTimings = runCPUDemo()
 #if canImport(Metal)

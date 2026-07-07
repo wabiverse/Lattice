@@ -42,6 +42,11 @@ private final class FakeStageSource: USDStageSourceRepresentable
     attributes[path]?[name]
   }
 
+  func attributeNames(at path: String) -> [String]
+  {
+    (attributes[path]?.keys).map { $0.sorted() } ?? []
+  }
+
   func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
   {
     written[path, default: [:]][name] = value
@@ -167,6 +172,41 @@ final class PopulationTests: XCTestCase
     let entityC = try XCTUnwrap(paths.entity(for: "/c"))
     XCTAssertEqual(store.get(Transform.self, for: entityA), Transform(x: 1, y: 2, z: 3))
     XCTAssertFalse(store.has(Transform.self, on: entityC))
+  }
+
+  func testPrefetchBringsInOnlyPrimsCarryingRequestedAttributes() throws
+  {
+    let store = LatticeStore()
+    let paths = LatticePathTable()
+    let source = FakeStageSource(attributes: [
+      "/mesh": ["points": .float3Array([SIMD3(0, 0, 0)]), "displayColor": .float3(1, 1, 1)],
+      "/xform": ["xformOp:translate": .float3(1, 2, 3)],
+      "/other": ["custom:tag": .string("ignored")], // none requested -> never enters
+    ])
+    let sync = USDPopulationSync(store: store, paths: paths, source: source)
+
+    // Prefetch only transforms and points - the working set, not everything.
+    let mirrored = sync.prefetch
+    { name in
+      name.hasPrefix("xformOp:") || name == "points"
+    }
+
+    // Two attributes mirrored, across the two prims that carry them.
+    XCTAssertEqual(mirrored, 2)
+    XCTAssertEqual(store.entityCount, 2)
+
+    // The prim carrying none of the requested attributes never got an entity.
+    XCTAssertNil(paths.entity(for: "/other"))
+    XCTAssertNotNil(paths.entity(for: "/mesh"))
+    XCTAssertNotNil(paths.entity(for: "/xform"))
+
+    // Only the requested attribute was mirrored on /mesh - displayColor was not.
+    let mesh = try XCTUnwrap(paths.entity(for: "/mesh"))
+    XCTAssertEqual(
+      store.getDynamic(LatticeUSDValue.self, forKey: "points", for: mesh),
+      .float3Array([SIMD3(0, 0, 0)])
+    )
+    XCTAssertNil(store.getDynamic(LatticeUSDValue.self, forKey: "displayColor", for: mesh))
   }
 
   func testSyncIncrementalSpawnsAndDespawnsOnlyTheDelta() throws

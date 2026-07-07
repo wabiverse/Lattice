@@ -47,7 +47,16 @@ public final class Archetype
 
   func column<T: LatticeComponent>(_ type: T.Type) -> (any TypedColumnStorage<T>)?
   {
-    columns[ObjectIdentifier(type)] as? any TypedColumnStorage<T>
+    column(id: ObjectIdentifier(type))
+  }
+
+  /// Column lookup by an explicit ``ComponentTypeID`` rather than a Swift
+  /// metatype. Static components key on `ObjectIdentifier(T.self)`; dynamic,
+  /// runtime-named columns (see ``LatticeStore/setDynamic(_:forKey:on:)``) key
+  /// on an interned per-name id - both share this one storage path.
+  func column<T: LatticeComponent>(id: ComponentTypeID) -> (any TypedColumnStorage<T>)?
+  {
+    columns[id] as? any TypedColumnStorage<T>
   }
 
   /// Returns the column for `T`, creating it via `factory` if this archetype
@@ -59,7 +68,16 @@ public final class Archetype
     factory: () -> any ColumnStorage
   ) -> any TypedColumnStorage<T>
   {
-    let id = ObjectIdentifier(type)
+    ensureColumn(id: ObjectIdentifier(type), factory: factory)
+  }
+
+  /// The create-if-absent counterpart to ``column(id:)``, keyed by an explicit
+  /// id so static and dynamic columns share one code path.
+  func ensureColumn<T: LatticeComponent>(
+    id: ComponentTypeID,
+    factory: () -> any ColumnStorage
+  ) -> any TypedColumnStorage<T>
+  {
     if let existing = columns[id] as? any TypedColumnStorage<T>
     {
       return existing

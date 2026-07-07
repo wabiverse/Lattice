@@ -35,7 +35,7 @@
   /// about CPU/GPU synchronization as a first-class concern; on an M-series
   /// Mac this column type mostly doesn't have to.
   ///
-  /// Conforms to ``TypedColumnStorage``, so wiring it into the store is a
+  /// Conforms to ``/Lattice/TypedColumnStorage``, so wiring it into the store is a
   /// one-liner at registration time:
   ///
   /// ```swift
