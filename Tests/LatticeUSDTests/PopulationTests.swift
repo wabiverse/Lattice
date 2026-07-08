@@ -179,20 +179,20 @@ final class PopulationTests: XCTestCase
     let store = LatticeStore()
     let paths = LatticePathTable()
     let source = FakeStageSource(attributes: [
-      "/mesh": ["points": .float3Array([SIMD3(0, 0, 0)]), "displayColor": .float3(1, 1, 1)],
+      "/mesh": ["points": .float3Array([LatticeFloat3(0, 0, 0)]), "displayColor": .float3(1, 1, 1)],
       "/xform": ["xformOp:translate": .float3(1, 2, 3)],
       "/other": ["custom:tag": .string("ignored")], // none requested -> never enters
     ])
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
 
     // Prefetch only transforms and points - the working set, not everything.
-    let mirrored = sync.prefetch
+    let stats = sync.prefetch
     { name in
       name.hasPrefix("xformOp:") || name == "points"
     }
 
     // Two attributes mirrored, across the two prims that carry them.
-    XCTAssertEqual(mirrored, 2)
+    XCTAssertEqual(stats.mirrored, 2)
     XCTAssertEqual(store.entityCount, 2)
 
     // The prim carrying none of the requested attributes never got an entity.
@@ -204,9 +204,37 @@ final class PopulationTests: XCTestCase
     let mesh = try XCTUnwrap(paths.entity(for: "/mesh"))
     XCTAssertEqual(
       store.getDynamic(LatticeUSDValue.self, forKey: "points", for: mesh),
-      .float3Array([SIMD3(0, 0, 0)])
+      .float3Array([LatticeFloat3(0, 0, 0)])
     )
     XCTAssertNil(store.getDynamic(LatticeUSDValue.self, forKey: "displayColor", for: mesh))
+  }
+
+  func testPrefetchBinsIdenticalArrayPayloads() throws
+  {
+    // Three "instances" of the same geometry - identical points arrays, the
+    // way USD resolves a referenced mesh on every prim composed from it - plus
+    // one prim with distinct geometry and one scalar (never binned).
+    let sharedPoints: LatticeUSDValue = .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)])
+    let store = LatticeStore()
+    let paths = LatticePathTable()
+    let source = FakeStageSource(attributes: [
+      "/instA": ["points": sharedPoints],
+      "/instB": ["points": sharedPoints],
+      "/instC": ["points": sharedPoints],
+      "/unique": ["points": .float3Array([LatticeFloat3(9, 9, 9)]), "xformOp:translate": .float3(0, 0, 0)],
+    ])
+    let sync = USDPopulationSync(store: store, paths: paths, source: source)
+
+    let stats = sync.prefetch { $0 == "points" || $0.hasPrefix("xformOp:") }
+
+    // 5 values mirrored; 4 are arrays, of which 2 own buffers (the shared
+    // geometry and the unique one) and 2 were binned onto the first-seen copy.
+    // The scalar translate is stored inline and never enters the bins.
+    XCTAssertEqual(stats, .init(mirrored: 5, uniqueArrays: 2, sharedArrays: 2))
+
+    // Binning must not change what any entity reads back.
+    let instC = try XCTUnwrap(paths.entity(for: "/instC"))
+    XCTAssertEqual(store.getDynamic(LatticeUSDValue.self, forKey: "points", for: instC), sharedPoints)
   }
 
   func testSyncIncrementalSpawnsAndDespawnsOnlyTheDelta() throws
@@ -335,6 +363,35 @@ final class PopulationTests: XCTestCase
 
     // double3 is narrowed to Float on the way into LatticeUSDValue.float3.
     XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(7, 8, 9))
+  }
+
+  /// Arrays come back as zero-copy views over the VtArray's own buffer (via
+  /// `Overlay.cdata`), so this proves the packed `LatticeFloat3` layout reads
+  /// the right elements, the boxed handle keeps the buffer alive after `Get`
+  /// returns, and content equality is indistinguishable from an owned copy.
+  func testRealSourceReadsFloat3ArrayAsZeroCopyView() throws
+  {
+    let stage = makeStage(definingPrims: ["/mesh"])
+    let prim = stage.getPrim(at: "/mesh")
+    var points = Pixar.VtVec3fArray()
+    points.push_back(GfVec3f(1, 2, 3))
+    points.push_back(GfVec3f(4, 5, 6))
+    let attribute = try XCTUnwrap(prim.createAttribute(name: "points", typeName: .point3fArray, custom: true))
+    XCTAssertTrue(attribute.Set(points, UsdTimeCode.Default()))
+
+    let source = USDStageSource(stage: stage)
+    let value = try XCTUnwrap(source.attributeValue(at: "/mesh", attribute: "points"))
+
+    guard case let .float3Array(view) = value
+    else { return XCTFail("expected .float3Array, got \(value)") }
+
+    // The 12-byte packed element must land every component, not just index 0.
+    XCTAssertEqual(view.count, 2)
+    XCTAssertEqual(view[0], LatticeFloat3(1, 2, 3))
+    XCTAssertEqual(view[1], LatticeFloat3(4, 5, 6))
+
+    // Backing must be invisible: a zero-copy view equals an owned literal.
+    XCTAssertEqual(value, .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)]))
   }
 
   func testRealSourceReturnsNilForMissingPrimAttributeOrValue()

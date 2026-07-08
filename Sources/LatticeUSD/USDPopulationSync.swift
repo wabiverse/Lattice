@@ -115,12 +115,35 @@ public final class USDPopulationSync
     return SyncDelta(added: added, removed: removed)
   }
 
+  /// What a ``prefetch(where:)`` mirrored, including how much of the heavy
+  /// array data it was able to *bin*: `sharedArrays` counts array values whose
+  /// payload was byte-identical to one already mirrored and so shares its
+  /// buffer instead of holding a fresh copy. `uniqueArrays` counts the buffers
+  /// actually resident. High `sharedArrays` on a production scene is expected -
+  /// it's the referenced/instanced geometry USD itself stores only once.
+  public struct PrefetchStats: Equatable, Sendable
+  {
+    /// Total attribute values mirrored into the store.
+    public var mirrored: Int
+    /// Array payloads that own a resident buffer.
+    public var uniqueArrays: Int
+    /// Array payloads deduplicated onto an existing buffer.
+    public var sharedArrays: Int
+
+    public init(mirrored: Int, uniqueArrays: Int, sharedArrays: Int)
+    {
+      self.mirrored = mirrored
+      self.uniqueArrays = uniqueArrays
+      self.sharedArrays = sharedArrays
+    }
+  }
+
   /// Fabric-style prefetch: mirrors into the store only the attributes whose
   /// names satisfy `matches`, and brings a prim in *only* when it carries at
   /// least one such attribute with a resolvable value. Each mirrored attribute
   /// lands in its own dense, runtime-named column
   /// (``LatticeStore/setDynamic(_:forKey:on:)``), keyed by attribute name.
-  /// Returns the total number of attribute values mirrored.
+  /// Returns what was mirrored, and how much array data was shared.
   ///
   /// This is the population model Fabric actually uses, and the reason it
   /// exists: a prim enters Fabric because something *prefetched or queried*
@@ -132,14 +155,29 @@ public final class USDPopulationSync
   /// geometry, the primvars a draw reads - e.g. `{ $0.hasPrefix("xformOp:") ||
   /// $0 == "points" }`.
   ///
+  /// Array payloads are content-hash *binned* on the way in: USD resolves the
+  /// same referenced geometry to byte-identical arrays on every prim composed
+  /// from it, and this pass interns them so identical payloads share one
+  /// copy-on-write buffer in the store - recovering the sharing USD's layer
+  /// data already has, instead of expanding a unique copy per prim. The cost
+  /// is one O(n) hash per mirrored array at population time (time vs space);
+  /// value semantics are untouched, since a later per-entity write copies its
+  /// buffer on mutation like any Swift array.
+  ///
   /// Unlike ``syncAll()``, this does not bind an entity per prim up front; the
   /// path<->entity binding is created lazily, at the moment a prefetched
   /// attribute is found. Safe to call after `syncAll()`/`syncIncremental()`
   /// too - an already-bound prim reuses its entity.
   @discardableResult
-  public func prefetch(where matches: (_ attributeName: String) -> Bool) -> Int
+  public func prefetch(where matches: (_ attributeName: String) -> Bool) -> PrefetchStats
   {
-    var mirrored = 0
+    var stats = PrefetchStats(mirrored: 0, uniqueArrays: 0, sharedArrays: 0)
+    // The bins. `insert` hands back the already-present member on a hit, whose
+    // arrays reference the first-seen buffers - storing that member instead of
+    // the fresh copy is the whole dedup. The set itself is discarded on
+    // return; the store's columns keep the shared buffers alive.
+    var bins: Set<LatticeUSDValue> = []
+
     for path in source.primPaths()
     {
       let requested = source.attributeNames(at: path).filter(matches)
@@ -151,7 +189,14 @@ public final class USDPopulationSync
       var entity: LatticeEntity? = paths.entity(for: path)
       for name in requested
       {
-        guard let value = source.attributeValue(at: path, attribute: name) else { continue }
+        guard var value = source.attributeValue(at: path, attribute: name) else { continue }
+
+        if value.isArrayBacked
+        {
+          let (inserted, canonical) = bins.insert(value)
+          value = canonical
+          if inserted { stats.uniqueArrays += 1 } else { stats.sharedArrays += 1 }
+        }
 
         let bound: LatticeEntity
         if let entity
@@ -166,10 +211,10 @@ public final class USDPopulationSync
         }
 
         store.setDynamic(value, forKey: name, on: bound)
-        mirrored += 1
+        stats.mirrored += 1
       }
     }
-    return mirrored
+    return stats
   }
 
   /// Convenience for callers hand-rolling their own component population

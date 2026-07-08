@@ -450,9 +450,11 @@ func isPrefetchedAttribute(_ name: String) -> Bool
 /// attributes in ``isPrefetchedAttribute(_:)`` on it, and only those attributes
 /// are mirrored - each into its own dense, runtime-named column via
 /// ``LatticeStore/setDynamic(_:forKey:on:)``, prim as the row, attribute name
-/// as the column. Returns the total number of attribute values mirrored.
+/// as the column. Array payloads are content-hash binned by the prefetch, so
+/// geometry USD shares across referenced/instanced prims is stored once here
+/// too. Returns what was mirrored, including the unique/shared array split.
 @discardableResult
-func prefetchWorkingSet(into store: LatticeStore, source: USDStageSource) -> Int
+func prefetchWorkingSet(into store: LatticeStore, source: USDStageSource) -> USDPopulationSync.PrefetchStats
 {
   let paths = LatticePathTable()
   let sync = USDPopulationSync(store: store, paths: paths, source: source)
@@ -772,7 +774,7 @@ func runMemoryFactorDemo()
   // prim enters only because one of those attributes was touched, and only
   // those attributes are mirrored - not every attribute of every prim.
   let store = LatticeStore()
-  let mirroredValues = prefetchWorkingSet(into: store, source: source)
+  let prefetched = prefetchWorkingSet(into: store, source: source)
   let latticeFootprint = currentMemoryFootprint()
 
   let sceneCost = sceneFootprint >= baseline ? sceneFootprint - baseline : 0
@@ -782,8 +784,14 @@ func runMemoryFactorDemo()
   print("Prims / prefetched entities: \(primPaths.count) / \(entities)")
   if entities > 0
   {
-    let perPrim = Double(mirroredValues) / Double(entities)
-    print("Attributes mirrored:         \(mirroredValues) (\(String(format: "%.1f", perPrim))/entity)")
+    let perPrim = Double(prefetched.mirrored) / Double(entities)
+    print("Attributes mirrored:         \(prefetched.mirrored) (\(String(format: "%.1f", perPrim))/entity)")
+  }
+  let totalArrays = prefetched.uniqueArrays + prefetched.sharedArrays
+  if totalArrays > 0
+  {
+    let sharedPercent = Double(prefetched.sharedArrays) / Double(totalArrays) * 100
+    print("Array payloads:              \(totalArrays) (\(prefetched.uniqueArrays) unique, \(prefetched.sharedArrays) binned = \(String(format: "%.0f", sharedPercent))% shared)")
   }
   print("Scene resident (n):          \(formatBytes(sceneCost))")
   print("With Lattice on (kN):        \(formatBytes(sceneCost + latticeCost))")

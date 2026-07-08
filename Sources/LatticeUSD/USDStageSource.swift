@@ -204,62 +204,52 @@ public final class USDStageSource: USDStageSourceRepresentable
         return .float3(Float(v.x), Float(v.y), Float(v.z))
 
       // MARK: arrays (the bulk of a real asset)
+      //
+      // Every layout-compatible case is a zero-copy view (`view(_:base:count:as:)`)
+      // over the VtArray's own buffer - mirroring costs a handle, not a payload.
+      // Only strings (un-viewable across the C++ boundary) and double2 (a
+      // narrowing conversion) still copy.
 
       case "float4[]", "color4f[]":
         var array = Pixar.VtVec4fArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [SIMD4<Float>] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(SIMD4<Float>(array[i][0], array[i][1], array[i][2], array[i][3])) }
-        return .float4Array(arrayValue)
-      
+        return .float4Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: LatticeFloat4.self))
+
       case "float[]":
         var array = Pixar.VtFloatArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Float] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i]) }
-        return .floatArray(arrayValue)
+        return .floatArray(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Float.self))
 
       case "double[]":
         var array = Pixar.VtDoubleArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Double] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i]) }
-        return .doubleArray(arrayValue)
+        return .doubleArray(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Double.self))
 
       case "int[]":
         var array = Pixar.VtIntArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Int64] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(Int64(array[i])) }
-        return .intArray(arrayValue)
+        return .intArray(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Int32.self))
+
+      // Unsigned 32-bit is viewed by bit pattern - documented on `.intArray`.
+      case "uint[]":
+        var array = Pixar.VtUIntArray()
+        guard attribute.Get(&array, time) else { return nil }
+        return .intArray(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Int32.self))
 
       case "int64[]":
         var array = Pixar.VtInt64Array()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Int64] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i]) }
-        return .intArray(arrayValue)
+        return .int64Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Int64.self))
 
-      case "uint[]":
-        var array = Pixar.VtUIntArray()
+      case "uint64[]":
+        var array = Pixar.VtUInt64Array()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Int64] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(Int64(array[i])) }
-        return .intArray(arrayValue)
+        return .int64Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Int64.self))
 
       case "bool[]":
         var array = Pixar.VtBoolArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [Bool] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i]) }
-        return .boolArray(arrayValue)
+        return .boolArray(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: Bool.self))
 
       case "token[]":
         var array = Pixar.VtTokenArray()
@@ -280,36 +270,32 @@ public final class USDStageSource: USDStageSourceRepresentable
       case let type where Self.float2ArrayTypes.contains(type):
         var array = Pixar.VtVec2fArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [SIMD2<Float>] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i].simd) }
-        return .float2Array(arrayValue)
+        return .float2Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: LatticeFloat2.self))
 
-      // GfVec2d-backed; narrowed to Float on the way in, the same way the
-      // scalar double3 case narrows to .float3.
+      // GfVec2d-backed; narrowed to Float on the way in (the same way the
+      // scalar double3 case narrows to .float3), so this is a converting copy
+      // rather than a view - the element widths differ.
       case let type where Self.double2ArrayTypes.contains(type):
         var array = Pixar.VtVec2dArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [SIMD2<Float>] = []
+        var arrayValue: [LatticeFloat2] = []
         arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(SIMD2<Float>(array[i].simd)) }
-        return .float2Array(arrayValue)
+        for i in 0..<Int(array.size())
+        {
+          let v = array[i].simd
+          arrayValue.append(LatticeFloat2(Float(v.x), Float(v.y)))
+        }
+        return .float2Array(LatticeUSDArray(copying: arrayValue))
 
       case let type where Self.float3ArrayTypes.contains(type):
         var array = Pixar.VtVec3fArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [SIMD3<Float>] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i].simd) }
-        return .float3Array(arrayValue)
+        return .float3Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: LatticeFloat3.self))
 
       case let type where Self.double3ArrayTypes.contains(type):
         var array = Pixar.VtVec3dArray()
         guard attribute.Get(&array, time) else { return nil }
-        var arrayValue: [SIMD3<Double>] = []
-        arrayValue.reserveCapacity(Int(array.size()))
-        for i in 0..<Int(array.size()) { arrayValue.append(array[i].simd) }
-        return .double3Array(arrayValue)
+        return .double3Array(Self.view(array, base: Overlay.cdata(array), count: Int(array.size()), as: LatticeDouble3.self))
 
       default:
         return nil
@@ -349,6 +335,41 @@ public final class USDStageSource: USDStageSourceRepresentable
         print("not yet implemented: not authoring \(value) back to USD stage")
         return false
     }
+  }
+
+  // MARK: - Zero-copy views
+
+  /// Boxes a C++ value - a `VtArray` handle - behind a Swift class reference,
+  /// so a ``LatticeUSDArray`` can keep it (and therefore the refcounted buffer
+  /// it shares) alive for as long as the view exists.
+  private final class Handle<A>
+  {
+    let value: A
+
+    init(_ value: A)
+    {
+      self.value = value
+    }
+  }
+
+  /// Wraps a `VtArray`'s buffer as a zero-copy ``LatticeUSDArray`` whose
+  /// `Element` must be layout-identical to the array's C++ element type
+  /// (that's what the packed `LatticeFloat3`-family types are for).
+  ///
+  /// The pointer must come from `Overlay.cdata(_:)` - the *const* accessor.
+  /// The non-const `data()` detaches copy-on-write, which would deep-copy the
+  /// shared buffer this exists to avoid. Boxing the handle bumps the buffer's
+  /// refcount, so the view stays valid independent of the stage's lifetime.
+  private static func view<A, CxxElement, Element>(
+    _ array: A,
+    base: UnsafePointer<CxxElement>?,
+    count: Int,
+    as _: Element.Type
+  ) -> LatticeUSDArray<Element>
+  {
+    guard let base, count > 0 else { return LatticeUSDArray(copying: []) }
+    let typed = UnsafeRawPointer(base).assumingMemoryBound(to: Element.self)
+    return LatticeUSDArray(owner: Handle(array), view: UnsafeBufferPointer(start: typed, count: count))
   }
 
   // MARK: - Roled type-name groups
