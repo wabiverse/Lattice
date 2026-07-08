@@ -204,6 +204,18 @@ What's genuinely still ahead, in rough priority:
 real `UsdStage`: it traverses the composed stage for prim paths and reads
 resolved attribute values, mapping USD value types to `LatticeUSDValue`.
 
+```pwsh
+git clone https://github.com/wabiverse/Lattice.git
+cd Lattice
+
+# since apple/SwiftUsd does not yet expose zero-copy
+# read-only buffer access via VtArray::cdata(), this
+# will require building OpenUSD from source with the
+# following environment variable:
+export SWIFTUSD_BUILD_FROM_SOURCE=1
+swift run -c release LatticeDemo --usd /path/to/stage.usda
+```
+
 ```swift
 let source = USDStageSource(openingStageAt: "scene.usd")
 let sync = USDPopulationSync(store: store, paths: paths, source: source)
