@@ -423,6 +423,30 @@ final class PopulationTests: XCTestCase
     XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(9, 9, 9))
   }
 
+  /// The write path is the read path's type mapping in reverse: `.int` must
+  /// coerce to the attribute's exact int width, and array values must build
+  /// the exact VtArray type. Round-tripping through a live stage proves both
+  /// directions agree.
+  func testRealSourceSetAttributeValueRoundTripsWidthsAndArrays() throws
+  {
+    let stage = makeStage(definingPrims: ["/p"])
+    let prim = stage.getPrim(at: "/p")
+    prim.createAttribute(name: "count", typeName: .int, custom: true)
+    prim.createAttribute(name: "points", typeName: .point3fArray, custom: true)
+
+    let source = USDStageSource(stage: stage)
+
+    // `.int` carries Int64; the attribute is 32-bit `int` - Set must narrow.
+    XCTAssertTrue(source.setAttributeValue(.int(7), at: "/p", attribute: "count"))
+    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "count"), .int(7))
+
+    // An owned array value authors a VtVec3fArray and reads back as an
+    // (equal-by-content) zero-copy view.
+    let points: LatticeUSDValue = .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)])
+    XCTAssertTrue(source.setAttributeValue(points, at: "/p", attribute: "points"))
+    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "points"), points)
+  }
+
   func testRealSourceSetAttributeValueFailsForMissingPrimOrAttribute()
   {
     let stage = makeStage(definingPrims: ["/p"])

@@ -310,30 +310,217 @@ public final class USDStageSource: USDStageSourceRepresentable
   /// This is the store->stage half of the loop: after a system computes new
   /// values in the runtime store, `USDPopulationSync.writeBackChanged` funnels
   /// the changed rows through here to author them back onto USD.
+  ///
+  /// `Set` is exact-typed the same way `Get` is, so this is the read path's
+  /// mapping run in reverse: where a value case covers several USD widths
+  /// (`.double` from `float`/`double`, `.int` from four int widths,
+  /// `.string` from `string`/`token`/`asset`, `.float3` from
+  /// `float3`/`double3` roles), the branch consults the attribute's type
+  /// name and authors the exact C++ type it resolves to. Returns `false`
+  /// when the value's shape doesn't fit the attribute's type (e.g. an array case
+  /// on a scalar attribute).
   public func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
   {
     let prim = stage.getPrim(at: path)
-    guard prim.IsValid() else { return false }
-    
+    guard prim.isValid else { return false }
+
     guard let attribute = prim.attribute(named: name)
     else { return false }
-    
+
     let time = UsdTimeCode.Default()
+    let typeName = attribute.typeName.GetAsToken().string
+
     switch value
     {
+      // MARK: scalars
+
       case let .double(d):
-        return attribute.set(d)
+        switch typeName
+        {
+          case "float":
+            return attribute.Set(Float(d), time)
+          default:
+            return attribute.Set(d, time)
+        }
+
+      case let .int(i):
+        switch typeName
+        {
+          case "int":
+            return attribute.Set(Int32(truncatingIfNeeded: i), time)
+          case "uint":
+            return attribute.Set(UInt32(truncatingIfNeeded: i), time)
+          case "uint64":
+            return attribute.Set(UInt64(bitPattern: i), time)
+          default:
+            return attribute.Set(i, time)
+        }
+
       case let .bool(b):
-        return attribute.set(b)
+        return attribute.Set(b, time)
+
       case let .string(s):
-        return attribute.set(s)
+        switch typeName
+        {
+          case "token":
+            return attribute.Set(Tf.Token(s), time)
+          case "asset":
+            return attribute.Set(Sdf.AssetPath(s), time)
+          default:
+            return attribute.Set(std.string(s), time)
+        }
+
       case let .float2(x, y):
         return attribute.Set(GfVec2f(SIMD2<Float>(x, y)), time)
+
       case let .float3(x, y, z):
-        return attribute.set(GfVec3f(SIMD3<Float>(x, y, z)))
-      default:
-        print("not yet implemented: not authoring \(value) back to USD stage")
-        return false
+        if Self.double3Types.contains(typeName)
+        {
+          return attribute.Set(GfVec3d(Double(x), Double(y), Double(z)), time)
+        }
+        return attribute.Set(GfVec3f(SIMD3<Float>(x, y, z)), time)
+
+      case let .float4(x, y, z, w):
+        return attribute.Set(Pixar.GfVec4f(x, y, z, w), time)
+
+      case let .double16(m):
+        return attribute.Set(
+          GfMatrix4d(
+            m[0], m[1], m[2], m[3],
+            m[4], m[5], m[6], m[7],
+            m[8], m[9], m[10], m[11],
+            m[12], m[13], m[14], m[15]
+          ),
+          time
+        )
+
+      // MARK: arrays
+      //
+      // The bytes are already contiguous in the view (and every packed
+      // `LatticeFloat3`-family element is layout-identical to its Gf
+      // counterpart), so each branch authors with *one* C++-side range copy
+      // via `Overlay.vtArray(src, count)` - never a per-element `push_back`,
+      // which costs an interop call per element. The only loops left are
+      // genuine per-element conversions: float->double widening and
+      // string/token bridging.
+
+      case let .floatArray(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          attribute.Set(Overlay.vtArray(buffer.baseAddress, buffer.count), time)
+        }
+
+      case let .doubleArray(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          attribute.Set(Overlay.vtArray(buffer.baseAddress, buffer.count), time)
+        }
+
+      case let .intArray(view):
+        // `.intArray` mirrors both int[] and (bit-pattern) uint[]; write back
+        // through the same interpretation the read applied. Same 32-bit
+        // payload either way, so the uint case is a rebind, not a convert.
+        return view.withUnsafeBufferPointer
+        { buffer in
+          if typeName == "uint[]"
+          {
+            let unsigned = buffer.baseAddress.map
+            {
+              UnsafeRawPointer($0).assumingMemoryBound(to: UInt32.self)
+            }
+            return attribute.Set(Overlay.vtArray(unsigned, buffer.count), time)
+          }
+          return attribute.Set(Overlay.vtArray(buffer.baseAddress, buffer.count), time)
+        }
+
+      case let .int64Array(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          if typeName == "uint64[]"
+          {
+            let unsigned = buffer.baseAddress.map
+            {
+              UnsafeRawPointer($0).assumingMemoryBound(to: UInt64.self)
+            }
+            return attribute.Set(Overlay.vtArray(unsigned, buffer.count), time)
+          }
+          return attribute.Set(Overlay.vtArray(buffer.baseAddress, buffer.count), time)
+        }
+
+      case let .boolArray(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          attribute.Set(Overlay.vtArray(buffer.baseAddress, buffer.count), time)
+        }
+
+      case let .stringArray(elements):
+        switch typeName
+        {
+          case "token[]":
+            var array = Pixar.VtTokenArray()
+            array.reserve(elements.count)
+            for element in elements { array.push_back(Tf.Token(element)) }
+            return attribute.Set(array, time)
+          default:
+            var array = Pixar.VtStringArray()
+            array.reserve(elements.count)
+            for element in elements { array.push_back(std.string(element)) }
+            return attribute.Set(array, time)
+        }
+
+      case let .float2Array(view):
+        if Self.double2ArrayTypes.contains(typeName)
+        {
+          var array = Pixar.VtVec2dArray()
+          array.reserve(view.count)
+          for element in view { array.push_back(GfVec2d(Double(element.x), Double(element.y))) }
+          return attribute.Set(array, time)
+        }
+        return view.withUnsafeBufferPointer
+        { buffer in
+          let vecs = buffer.baseAddress.map
+          {
+            UnsafeRawPointer($0).assumingMemoryBound(to: GfVec2f.self)
+          }
+          return attribute.Set(Overlay.vtArray(vecs, buffer.count), time)
+        }
+
+      case let .float3Array(view):
+        if Self.double3ArrayTypes.contains(typeName)
+        {
+          var array = Pixar.VtVec3dArray()
+          array.reserve(view.count)
+          for element in view { array.push_back(GfVec3d(Double(element.x), Double(element.y), Double(element.z))) }
+          return attribute.Set(array, time)
+        }
+        return view.withUnsafeBufferPointer
+        { buffer in
+          let vecs = buffer.baseAddress.map
+          {
+            UnsafeRawPointer($0).assumingMemoryBound(to: GfVec3f.self)
+          }
+          return attribute.Set(Overlay.vtArray(vecs, buffer.count), time)
+        }
+
+      case let .float4Array(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          let vecs = buffer.baseAddress.map
+          {
+            UnsafeRawPointer($0).assumingMemoryBound(to: Pixar.GfVec4f.self)
+          }
+          return attribute.Set(Overlay.vtArray(vecs, buffer.count), time)
+        }
+
+      case let .double3Array(view):
+        return view.withUnsafeBufferPointer
+        { buffer in
+          let vecs = buffer.baseAddress.map
+          {
+            UnsafeRawPointer($0).assumingMemoryBound(to: GfVec3d.self)
+          }
+          return attribute.Set(Overlay.vtArray(vecs, buffer.count), time)
+        }
     }
   }
 

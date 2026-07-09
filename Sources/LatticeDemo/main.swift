@@ -515,14 +515,18 @@ func populateFromUSD(into store: LatticeStore, source: USDStageSource) -> Lattic
   return paths
 }
 
+/// Register USD plugins prior to working with any real ``USDStageSource``.
+func runUSDPluginRegistration()
+{
+  // register all USD plugin resources.
+  Pixar.Bundler.shared.setup(.resources)
+}
+
 /// End-to-end USD benchmark: author a stage, populate a `LatticeStore` from a
 /// real ``USDStageSource``, then run the same integration serial, parallel, and
 /// on the GPU.
 func runUSDDemo()
 {
-  // register all USD plugin resources.
-  Pixar.Bundler.shared.setup(.resources)
-
   // building + opening the .usda stage is pure USD fixture setup, not a Lattice
   // cost, so it's deliberately not timed or reported. announced up front so any
   // pause reads as USD work, not Lattice.
@@ -720,9 +724,6 @@ func runUSDDemo()
 /// synthetic stage the USD benchmark authors, so the demo still runs standalone.
 func runMemoryFactorDemo()
 {
-  // register all USD plugin resources.
-  Pixar.Bundler.shared.setup(.resources)
-
   let scenePath = usdScenePathFromArguments()
 
   // warm USD's runtime (schema registry, plugins, value-type machinery) on a
@@ -812,6 +813,7 @@ func runMemoryFactorDemo()
   }
 }
 
+runUSDPluginRegistration()
 runMemoryFactorDemo()
 
 let cpuTimings = runCPUDemo()
