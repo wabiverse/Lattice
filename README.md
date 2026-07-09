@@ -209,10 +209,14 @@ git clone https://github.com/wabiverse/Lattice.git
 cd Lattice
 
 # since apple/SwiftUsd does not yet expose zero-copy
-# read-only buffer access via VtArray::cdata(), this
-# will require building OpenUSD from source with the
-# following environment variable:
+# read-only buffer access via VtArray::cdata(), or
+# single-copy construction from a contiguous buffer
+# issue: https://github.com/apple/SwiftUsd/issues/34
+# this will require building OpenUSD from source with
+# the following environment variable:
 export SWIFTUSD_BUILD_FROM_SOURCE=1
+
+# benchmark your own production scene
 swift run -c release LatticeDemo --usd /path/to/stage.usda
 ```
 
