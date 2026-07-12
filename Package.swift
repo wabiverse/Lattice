@@ -13,6 +13,7 @@ let package = Package(
   products: [
     .library(name: "Lattice", targets: ["Lattice"]),
     .library(name: "LatticeMetal", targets: ["LatticeMetal"]),
+    .library(name: "LatticeHydra", targets: ["LatticeHydra"]),
     .library(name: "LatticeUSD", targets: ["LatticeUSD"]),
     .executable(name: "LatticeDemo", targets: ["LatticeDemo"])
   ],
@@ -43,6 +44,17 @@ let package = Package(
         .interoperabilityMode(.Cxx)
       ]
     ),
+    
+    .target(
+      name: "LatticeHydra",
+      dependencies: [
+        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .target(name: "LatticeUSD"),
+      ],
+      swiftSettings: [
+        .interoperabilityMode(.Cxx)
+      ]
+    ),
 
     .executableTarget(
       name: "LatticeDemo",
@@ -50,6 +62,7 @@ let package = Package(
         .target(name: "Lattice"),
         .target(name: "LatticeMetal"),
         .target(name: "LatticeUSD"),
+        .target(name: "LatticeHydra"),
         .product(name: "OpenUSDKit", package: "swift-usd")
       ],
       cxxSettings: [
@@ -84,5 +97,6 @@ let package = Package(
         .interoperabilityMode(.Cxx)
       ]
     )
-  ]
+  ],
+  cxxLanguageStandard: .gnucxx17
 )

@@ -83,6 +83,37 @@ public struct LatticeDouble3: Hashable, Sendable
   }
 }
 
+/// Sixteen packed `Double`s in `GfMatrix4d`'s row-major layout (128
+/// bytes). `simd_double4x4` is the same size, but stores columns in
+/// column-major order, so direct reinterpretation would silently transpose
+/// the matrix rather than fail on a size mismatch.
+public struct LatticeDouble4x4: Hashable, Sendable
+{
+  public var m00: Double, m01: Double, m02: Double, m03: Double
+  public var m10: Double, m11: Double, m12: Double, m13: Double
+  public var m20: Double, m21: Double, m22: Double, m23: Double
+  public var m30: Double, m31: Double, m32: Double, m33: Double
+
+  public init(
+    _ m00: Double, _ m01: Double, _ m02: Double, _ m03: Double,
+    _ m10: Double, _ m11: Double, _ m12: Double, _ m13: Double,
+    _ m20: Double, _ m21: Double, _ m22: Double, _ m23: Double,
+    _ m30: Double, _ m31: Double, _ m32: Double, _ m33: Double)
+  {
+    self.m00 = m00; self.m01 = m01; self.m02 = m02; self.m03 = m03
+    self.m10 = m10; self.m11 = m11; self.m12 = m12; self.m13 = m13
+    self.m20 = m20; self.m21 = m21; self.m22 = m22; self.m23 = m23
+    self.m30 = m30; self.m31 = m31; self.m32 = m32; self.m33 = m33
+  }
+
+  public static let identity = LatticeDouble4x4(
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  )
+}
+
 // MARK: - Zero-copy array view
 
 /// An immutable, zero-copy view of a resolved USD array value.

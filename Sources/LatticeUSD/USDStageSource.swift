@@ -185,11 +185,19 @@ public final class USDStageSource: USDStageSourceRepresentable
         guard attribute.Get(&value, time) else { return nil }
         return .float4(value[0], value[1], value[2], value[3])
       
-      case "matrix4d":
-        var value = GfMatrix4d()
-        guard attribute.Get(&value, time) else { return nil }
-        let v = value.simd
-        return .double16(v)
+    case "matrix4d":
+      var value = GfMatrix4d()
+      guard attribute.Get(&value, time) else { return nil }
+      let r0 = value.GetRow(0)
+      let r1 = value.GetRow(1)
+      let r2 = value.GetRow(2)
+      let r3 = value.GetRow(3)
+      return .double16(LatticeDouble4x4(
+        r0[0], r0[1], r0[2], r0[3],
+        r1[0], r1[1], r1[2], r1[3],
+        r2[0], r2[1], r2[2], r2[3],
+        r3[0], r3[1], r3[2], r3[3]
+      ))
 
       case let type where Self.float3Types.contains(type):
         var value = GfVec3f()
@@ -384,15 +392,7 @@ public final class USDStageSource: USDStageSourceRepresentable
         return attribute.Set(Pixar.GfVec4f(x, y, z, w), time)
 
       case let .double16(m):
-        return attribute.Set(
-          GfMatrix4d(
-            m[0], m[1], m[2], m[3],
-            m[4], m[5], m[6], m[7],
-            m[8], m[9], m[10], m[11],
-            m[12], m[13], m[14], m[15]
-          ),
-          time
-        )
+        return attribute.Set(m.asGfMatrix4d, time)
 
       // MARK: arrays
       //
@@ -599,4 +599,17 @@ public final class USDStageSource: USDStageSourceRepresentable
   private static let double3ArrayTypes: Set<String> = [
     "double3[]", "point3d[]", "normal3d[]", "vector3d[]", "color3d[]", "texCoord3d[]",
   ]
+}
+
+public extension LatticeDouble4x4
+{
+  var asGfMatrix4d: GfMatrix4d
+  {
+    GfMatrix4d(
+      m00, m01, m02, m03,
+      m10, m11, m12, m13,
+      m20, m21, m22, m23,
+      m30, m31, m32, m33
+    )
+  }
 }

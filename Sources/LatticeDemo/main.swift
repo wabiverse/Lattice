@@ -13,6 +13,7 @@
 import Foundation
 import Lattice
 import LatticeUSD
+import LatticeHydra
 import OpenUSDKit
 
 #if canImport(Metal)

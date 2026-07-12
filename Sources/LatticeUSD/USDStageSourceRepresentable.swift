@@ -78,7 +78,7 @@ public enum LatticeUSDValue: Hashable, Sendable
   case float2(Float, Float)
   case float3(Float, Float, Float)
   case float4(Float, Float, Float, Float)
-  case double16(SIMD16<Double>)
+  case double16(LatticeDouble4x4)
 
   // Arrays - the heavy geometry/topology data, viewed zero-copy.
   case floatArray(LatticeUSDArray<Float>)
