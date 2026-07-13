@@ -10,7 +10,7 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-import Lattice
+import LatticeCore
 
 /// The minimal surface Lattice needs from any USD binding in order to
 /// populate a ``LatticeStore``.

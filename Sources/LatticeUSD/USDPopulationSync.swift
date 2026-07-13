@@ -10,7 +10,7 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-import Lattice
+import LatticeCore
 
 /// Populates a ``LatticeStore`` from a ``USDStageSourceRepresentable``,
 /// the way USDRT populates Fabric on first touch rather than mirroring the whole stage

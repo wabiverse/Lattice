@@ -10,25 +10,9 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-#ifndef LATTICE_HYDRA_XFORM_SOURCE_H
-#define LATTICE_HYDRA_XFORM_SOURCE_H
+#ifndef __WABI_IMAGING_HYDRA_H__
+#define __WABI_IMAGING_HYDRA_H__
 
-#include <pxr/pxrns.h>
+#include <wabi/imaging/hydra/sceneIndex.h>
 
-#include <Gf/matrix4d.h>
-#include <Sdf/path.h>
-
-#include <optional>
-#include <vector>
-
-namespace LatticeUSD {
-
-class LatticeXformSource {
- public:
-  std::optional<Pixar::GfMatrix4d> getLiveXform(const Pixar::SdfPath &path);
-  std::vector<Pixar::SdfPath> drainDirtiedPaths();
-};
-
-}  // namespace LatticeUSD
-
-#endif  // LATTICE_HYDRA_XFORM_SOURCE_H
+#endif // __WABI_IMAGING_HYDRA_H__

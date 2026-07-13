@@ -10,21 +10,27 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-#ifndef LATTICE_HYDRA_SCENE_INDEX_H
-#define LATTICE_HYDRA_SCENE_INDEX_H
+#ifndef __WABI_IMAGING_HYDRA_SCENE_INDEX_H__
+#define __WABI_IMAGING_HYDRA_SCENE_INDEX_H__
 
 #include <pxr/pxrns.h>
 
 #include <Tf/declarePtrs.h>
+#include <Tf/refPtr.h>
+
+#include <Gf/matrix4d.h>
 
 #include <Sdf/path.h>
+#include <Usd/stage.h>
 
 #include <Hd/containerDataSourceEditor.h>
 #include <Hd/filteringSceneIndex.h>
 #include <Hd/retainedDataSource.h>
 #include <Hd/xformSchema.h>
 
-#include "LatticeHydra/XformSource.h"
+#include "wabi/core/lattice.h"
+#include "wabi/gpu/metal.h"
+#include "wabi/scene/usd.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -64,4 +70,4 @@ class LatticeHydraSceneIndex : public HdSingleInputFilteringSceneIndexBase {
 
 PXR_NAMESPACE_CLOSE_SCOPE
 
-#endif  // LATTICE_HYDRA_SCENE_INDEX_H
+#endif  // __WABI_IMAGING_HYDRA_SCENE_INDEX_H__

@@ -10,21 +10,9 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-#include "LatticeHydra/SceneIndex.h"
-#include "LatticeHydra/XformSource.h"
-
-#include <Gf/matrix4d.h>
-#include <Sdf/path.h>
-
-#include <Hd/retainedDataSource.h>
-#include <Hd/xformSchema.h>
+#include "wabi/imaging/hydra/sceneIndex.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
-
-extern "C" {
-void swift_retain(void *value);
-void swift_release(void *value);
-}
 
 LatticeHydraSceneIndexRefPtr LatticeHydraSceneIndex::New(
     const HdSceneIndexBaseRefPtr &inputSceneIndex, LatticeUSD::LatticeXformSource *latticeSource)
@@ -55,11 +43,12 @@ HdSceneIndexPrim LatticeHydraSceneIndex::GetPrim(const SdfPath &primPath) const
     return prim;
   }
 
-  if (auto xf = _latticeSource->getLiveXform(primPath)) {
+  Pixar::GfMatrix4d xf;
+  if (_latticeSource->didGetLiveXform(xf, primPath)) {
     HdContainerDataSourceEditor editor(prim.dataSource);
     editor.Set(HdXformSchema::GetDefaultLocator(),
                HdXformSchema::Builder()
-                   .SetMatrix(HdRetainedTypedSampledDataSource<GfMatrix4d>::New(*xf))
+                   .SetMatrix(HdRetainedTypedSampledDataSource<GfMatrix4d>::New(xf))
                    .Build());
     prim.dataSource = editor.Finish();
   }
@@ -92,6 +81,7 @@ void LatticeHydraSceneIndex::Tick()
   if (!_latticeSource) {
     return;
   }
+  
   NotifyLatticeMutations(_latticeSource->drainDirtiedPaths());
 }
 

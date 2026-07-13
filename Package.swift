@@ -11,10 +11,10 @@ let package = Package(
     .watchOS(.v10)
   ],
   products: [
-    .library(name: "Lattice", targets: ["Lattice"]),
+    .library(name: "LatticeCore", targets: ["LatticeCore"]),
     .library(name: "LatticeMetal", targets: ["LatticeMetal"]),
-    .library(name: "LatticeHydra", targets: ["LatticeHydra"]),
     .library(name: "LatticeUSD", targets: ["LatticeUSD"]),
+    .library(name: "lattice", targets: ["lattice"]),
     .executable(name: "LatticeDemo", targets: ["LatticeDemo"])
   ],
   dependencies: [
@@ -22,12 +22,20 @@ let package = Package(
     .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.5.0"),
   ],
   targets: [
-    .target(name: "Lattice"),
+    .target(
+      name: "LatticeCore",
+      swiftSettings: [
+        .interoperabilityMode(.Cxx)
+      ]
+    ),
 
     .target(
       name: "LatticeMetal",
       dependencies: [
-        .target(name: "Lattice")
+        .target(name: "LatticeCore")
+      ],
+      swiftSettings: [
+        .interoperabilityMode(.Cxx)
       ]
     ),
 
@@ -35,7 +43,7 @@ let package = Package(
       name: "LatticeUSD",
       dependencies: [
         .product(name: "OpenUSDKit", package: "swift-usd"),
-        .target(name: "Lattice")
+        .target(name: "LatticeCore")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")
@@ -44,26 +52,25 @@ let package = Package(
         .interoperabilityMode(.Cxx)
       ]
     ),
-    
+
     .target(
-      name: "LatticeHydra",
+      name: "lattice",
       dependencies: [
         .product(name: "OpenUSDKit", package: "swift-usd"),
-        .target(name: "LatticeUSD"),
-      ],
-      swiftSettings: [
-        .interoperabilityMode(.Cxx)
+        .target(name: "LatticeCore"),
+        .target(name: "LatticeMetal"),
+        .target(name: "LatticeUSD")
       ]
     ),
 
     .executableTarget(
       name: "LatticeDemo",
       dependencies: [
-        .target(name: "Lattice"),
+        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .target(name: "LatticeCore"),
         .target(name: "LatticeMetal"),
         .target(name: "LatticeUSD"),
-        .target(name: "LatticeHydra"),
-        .product(name: "OpenUSDKit", package: "swift-usd")
+        .target(name: "lattice")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")
@@ -76,19 +83,22 @@ let package = Package(
     .testTarget(
       name: "LatticeTests",
       dependencies: [
-        .target(name: "Lattice")
+        .target(name: "LatticeCore")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")
       ],
+      swiftSettings: [
+        .interoperabilityMode(.Cxx)
+      ]
     ),
 
     .testTarget(
       name: "LatticeUSDTests",
       dependencies: [
-        .target(name: "Lattice"),
-        .target(name: "LatticeUSD"),
-        .product(name: "OpenUSDKit", package: "swift-usd")
+        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .target(name: "LatticeCore"),
+        .target(name: "LatticeUSD")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")

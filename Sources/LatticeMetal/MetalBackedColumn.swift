@@ -12,7 +12,7 @@
 
 #if canImport(Metal)
   import Foundation
-  import Lattice
+  import LatticeCore
   import Metal
 
   /// Marker protocol for component types that are safe to store directly in a

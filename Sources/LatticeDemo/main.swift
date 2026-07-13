@@ -11,9 +11,9 @@
  * ---------------------------------------------------------------- */
 
 import Foundation
-import Lattice
+import LatticeCore
 import LatticeUSD
-import LatticeHydra
+import lattice
 import OpenUSDKit
 
 #if canImport(Metal)

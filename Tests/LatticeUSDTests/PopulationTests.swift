@@ -12,7 +12,7 @@
 
 import CxxStdlib
 import Foundation
-import Lattice
+import LatticeCore
 import LatticeUSD
 import OpenUSDKit
 import XCTest
