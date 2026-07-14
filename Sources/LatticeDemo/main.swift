@@ -219,7 +219,7 @@ func runCPUDemo() -> CPUTimings
     // drift from the CPU's libm results, so the CPU/GPU spot-checks below agree
     // only to a few significant figures - expected, not a bug.
     let options = MTLCompileOptions()
-    options.fastMathEnabled = true
+    options.mathMode = .fast
     let library = try device.makeLibrary(source: metalShaderSource, options: options)
     guard let function = library.makeFunction(name: "integrate")
     else

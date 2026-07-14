@@ -45,10 +45,17 @@ for (_, module, _) in modules
 
 try fm.createDirectory(atPath: "\(includeRoot)/imaging", withIntermediateDirectories: true)
 
+print("Priming a full release build so dependencies are cached...")
+try run(["swift", "build", "-c", "release"])
+
 for (target, module, header) in modules
 {
   print("Generating \(module)/\(header) from target \(target)...")
-  try run(["swift", "build", "-c", "release", "--target", target, "-Xswiftc", "-emit-clang-header-path", "-Xswiftc", "Sources/lattice/include/wabi/\(module)/\(header)"])
+  try run([
+    "swift", "build", "-c", "release", "--target", target,
+    "-Xswiftc", "-emit-clang-header-path",
+    "-Xswiftc", "\(includeRoot)/\(module)/\(header)"
+  ])
 
   let expected = "\(includeRoot)/\(module)/\(header)"
   guard fm.fileExists(atPath: expected)
