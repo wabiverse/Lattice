@@ -4313,10 +4313,12 @@ struct LatticeUSD_LatticeFloat4 {
 };
 
 SWIFT_EXTERN void * _Nonnull $s10LatticeUSD0A11XformSourceC5store5pathsAC0A4Core0A5StoreC_AF0A9PathTableCtcfC(void * _Nonnull store, void * _Nonnull paths, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(store:paths:)
+SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC14beginReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // beginReadPhase()
+SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC12endReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // endReadPhase()
 SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF(SWIFT_INDIRECT_RESULT void * _Nonnull, const void * _Nonnull path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // getLiveXform(_:)
 SWIFT_EXTERN bool $s10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF(void * _Nonnull outMatrix, const void * _Nonnull path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // didGetLiveXform(_:_:)
-SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF(SWIFT_INDIRECT_RESULT void * _Nonnull, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // drainDirtiedPaths()
 SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF(const void * _Nonnull path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // markDirty(_:)
+SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF(SWIFT_INDIRECT_RESULT void * _Nonnull, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // drainDirtiedPaths()
 SWIFT_EXTERN void $s10LatticeUSD17USDPopulationSyncC7syncAllyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // syncAll()
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_returnStub_LatticeUSD_uint64_t_0_8_uint64_t_8_16 {
@@ -4392,7 +4394,6 @@ struct LatticeUSD_USDPopulationSyncNested_PrefetchStats {
   _Alignas(8) char _storage[24];
 };
 
-SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(Pixar::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_passStub_LatticeUSD_uint64_t_0_8_void_ptr_8_16 {
   uint64_t _1;
@@ -4406,6 +4407,8 @@ static SWIFT_C_INLINE_THUNK struct swift_interop_passStub_LatticeUSD_uint64_t_0_
   return result;
 }
 
+SWIFT_EXTERN ptrdiff_t $s10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF(struct swift_interop_passStub_LatticeUSD_uint64_t_0_8_void_ptr_8_16 path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // lookupKey(for:)
+SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(Pixar::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_returnStub_LatticeUSD_void_ptr_0_8 {
   void * _Nullable _1;
@@ -5205,6 +5208,20 @@ inline const constexpr bool isUsableInGenericContext<LatticeUSD::LatticeXformSou
 } // namespace swift
 
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+/// The live, app-owned transform store that <code>LatticeHydraSceneIndex</code>
+/// reads through on every <code>GetPrim()</code>.
+/// The frame contract is a two-phase one, and the assertions below encode it:
+/// \code
+/// mutate -> store.advanceChangeTick() -> sceneIndex.Tick() -> beginReadPhase()
+///        -> Hydra pulls GetPrim() -> endReadPhase()
+///
+/// \endcodeHydra calls <code>GetPrim()</code> concurrently from multiple threads. Concurrent
+/// <em>reads</em> of the store and path table are safe; a read overlapping a <em>write</em>
+/// is not - a <code>Dictionary</code> mutation racing a reader is memory corruption, not
+/// merely a torn value. Nothing in the type system enforces the phase split, so
+/// it is asserted instead: violations trap in debug and compile out in release.
+/// The phase itself lives in <code>LatticeFramePhase</code>, shared with
+/// <code>LatticePathTable</code> so both sides of the boundary assert against one clock.
 namespace _impl {
 
 class _impl_LatticeXformSource;
@@ -5219,31 +5236,51 @@ public:
   using RefCountedClass::RefCountedClass;
   using RefCountedClass::operator=;
   static SWIFT_INLINE_THUNK LatticeXformSource init(const LatticeCore::LatticeStore& store, const LatticeCore::LatticePathTable& paths) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC5store5pathsAC0A4Core0A5StoreC_AF0A9PathTableCtcfc");
-/// Called from C++ GetPrim(). Returns nil if this path has no
-/// live Lattice-owned xform (falls through to the stage’s own value).
+/// Called by the frame loop after <code>Tick()</code>,
+/// before handing the scene index to Hydra.
+/// Reads become legal; writes become a
+/// programmer error.
+  SWIFT_INLINE_THUNK void beginReadPhase() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC14beginReadPhaseyyF");
+/// Called once Hydra has finished pulling for this frame.
+  SWIFT_INLINE_THUNK void endReadPhase() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC12endReadPhaseyyF");
+/// Called from C++ <code>GetPrim()</code>, once per prim per frame. Returns nil if this
+/// path has no live Lattice-owned xform (falls through to the stage’s own value).
+/// Deliberately keys on <code>SdfPath.GetHash()</code> rather than the path’s string
+/// form: <code>path.string</code> would heap-allocate a Swift <code>String</code> on every call,
+/// which at scene scale is the dominant per-frame cost. The hash agrees with the
+/// key <code>USDPopulationSync</code> bound with, courtesy of <code>SdfPath</code> interning.
   SWIFT_INLINE_THUNK swift::Optional<Pixar::GfMatrix4d> getLiveXform(const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF");
-/// A boolean-based alternative to <code>getLiveXform(_:)</code> to bypass a Swift -> C++ interoperability linker bug.
-/// Use this function in C++ clients to safely retrieve the live transform matrix without triggering
-/// compilation failures related to Swift optional types across the language boundary.
+/// A boolean-based alternative to <code>getLiveXform(_:)</code> to bypass a Swift -> C++
+/// interoperability linker bug.
 /// warning:
-/// This is a temporary workaround. Swift currently fails to generate the type metadata
-/// accessor for <code>swift::Optional<GfMatrix4d>::~Optional()</code>, resulting in a missing
-/// destructor linker error.
-/// \param outMatrix An in-out matrix that will be populated with the live transform if found.
+/// <code>outMatrix</code> must be initialized by the caller. Swift <code>inout</code>
+/// reads the value in before writing it back, and <code>GfMatrix4d</code>’s default ctor
+/// is <code>= default</code> - it leaves the 16 doubles uninitialized. Always pass an
+/// initialized <code>GfMatrix4d(1.0)</code>, never <code>GfMatrix4d()</code>.
+/// warning:
+/// This is a temporary workaround. Swift currently fails to generate
+/// the type metadata accessor for <code>swift::Optional<GfMatrix4d>::~Optional()</code>,
+/// producing a missing destructor linker error.
+/// \param outMatrix Populated with the live transform if one is found.
 ///
-/// \param path The target prim path (<code>SdfPath</code>).
+/// \param path The target prim path.
 ///
 ///
 /// returns:
-/// <code>true</code> if a live transform was found and written to <code>outMatrix</code>; otherwise, <code>false</code>.
+/// <code>true</code> if a live transform was found and written.
   SWIFT_INLINE_THUNK bool didGetLiveXform(Pixar::GfMatrix4d& outMatrix, const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF");
-/// Call after each frame’s mutation pass, before asking the scene
-/// index to notify. Drains and returns everything touched this tick.
-  SWIFT_INLINE_THUNK std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> drainDirtiedPaths() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF");
-/// Called by whatever drives per-frame mutation (existing
-/// changeTick/wholeColumnTick machinery) whenever a
-/// prim’s xform changes this frame.
+/// Called by whatever drives per-frame mutation whenever a prim’s xform
+/// changes this frame.
+/// The lock here is not redundant with the phase assertion: mutation may
+/// run on the parallel CPU path or from a GPU completion handler, so several
+/// threads can push concurrently <em>within</em> the mutable phase. The phase
+/// guards an ordering; this lock guards the structure.
   SWIFT_INLINE_THUNK void markDirty(const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF");
+/// Call after each frame’s mutation pass, before asking the scene index to
+/// notify. Drains and returns everything touched this tick.
+/// Must run <em>before</em> <code>beginReadPhase()</code>, since it clears the dirty
+/// set that the frame’s notifications are built from.
+  SWIFT_INLINE_THUNK std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> drainDirtiedPaths() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF");
 protected:
   SWIFT_INLINE_THUNK LatticeXformSource(void * _Nonnull ptr) noexcept : RefCountedClass(ptr) {}
 private:
@@ -5738,6 +5775,7 @@ class SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC") USDStageSource final : pub
 public:
   using RefCountedClass::RefCountedClass;
   using RefCountedClass::operator=;
+  SWIFT_INLINE_THUNK swift::Int lookupKey(const swift::String& path) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF");
 /// Wraps an already-opened stage. Use this when the caller owns stage
 /// lifetime (e.g. it also drives editing or rendering from the same stage).
   static SWIFT_INLINE_THUNK USDStageSource init(Pixar::UsdStage *_Nonnull stage) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfc");
@@ -6151,6 +6189,12 @@ return *storageObjectPtr;
   swift::_impl::ConsumedValueStorageDestroyer<LatticeCore::LatticePathTable> storageGuard_consumedParamCopy_paths(consumedParamCopy_paths);
   return _impl::_impl_LatticeXformSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC5store5pathsAC0A4Core0A5StoreC_AF0A9PathTableCtcfC(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_store), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_paths), swift::TypeMetadataTrait<LatticeXformSource>::getTypeMetadata()));
   }
+  SWIFT_INLINE_THUNK void LatticeXformSource::beginReadPhase() {
+  LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC14beginReadPhaseyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeXformSource::endReadPhase() {
+  LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC12endReadPhaseyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
   SWIFT_INLINE_THUNK swift::Optional<Pixar::GfMatrix4d> LatticeXformSource::getLiveXform(const Pixar::SdfPath& path) {
   return swift::_impl::_impl_Optional<Pixar::GfMatrix4d>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
     LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF(result, swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
@@ -6159,6 +6203,9 @@ return *storageObjectPtr;
   SWIFT_INLINE_THUNK bool LatticeXformSource::didGetLiveXform(Pixar::GfMatrix4d& outMatrix, const Pixar::SdfPath& path) {
   return LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF(swift::_impl::getOpaquePointer(outMatrix), swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
+  SWIFT_INLINE_THUNK void LatticeXformSource::markDirty(const Pixar::SdfPath& path) {
+  LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF(swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
   SWIFT_INLINE_THUNK std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> LatticeXformSource::drainDirtiedPaths() {
 alignas(alignof(std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>>)) char storage[sizeof(std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>>)];
 auto * _Nonnull storageObjectPtr = reinterpret_cast<std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> *>(storage);
@@ -6166,9 +6213,6 @@ LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O
 std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> result(static_cast<std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> &&>(*storageObjectPtr));
 storageObjectPtr->~vector();
 return result;
-  }
-  SWIFT_INLINE_THUNK void LatticeXformSource::markDirty(const Pixar::SdfPath& path) {
-  LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF(swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
   SWIFT_INLINE_THUNK void USDPopulationSync::syncAll() {
   LatticeUSD::_impl::$s10LatticeUSD17USDPopulationSyncC7syncAllyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
@@ -6220,6 +6264,9 @@ return result;
   return LatticeUSD::__USDPopulationSyncNested::_impl::_impl_PrefetchStats::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
     LatticeUSD::_impl::swift_interop_returnDirect_LatticeUSD_uint64_t_0_8_uint64_t_8_16_uint64_t_16_24(result, LatticeUSD::_impl::$s10LatticeUSD17USDPopulationSyncC13PrefetchStatsV8mirrored12uniqueArrays06sharedI0AESi_S2itcfC(mirrored, uniqueArrays, sharedArrays));
   });
+  }
+  SWIFT_INLINE_THUNK swift::Int USDStageSource::lookupKey(const swift::String& path) {
+  return LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF(LatticeUSD::_impl::swift_interop_passDirect_LatticeUSD_uint64_t_0_8_void_ptr_8_16(swift::_impl::_impl_String::getOpaquePointer(path)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
   SWIFT_INLINE_THUNK USDStageSource USDStageSource::init(Pixar::UsdStage *_Nonnull stage) {
   return _impl::_impl_USDStageSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(stage, swift::TypeMetadataTrait<USDStageSource>::getTypeMetadata()));

@@ -15,7 +15,7 @@ import Foundation
 import LatticeCore
 import LatticeUSD
 import OpenUSDKit
-import XCTest
+import Testing
 
 /// A `USDStageSource` with no USD behind it - just canned paths and attribute
 /// values - so the population layer can be exercised without opening a real stage.
@@ -32,6 +32,18 @@ private final class FakeStageSource: USDStageSourceRepresentable
     self.attributes = attributes
   }
 
+  /// `String.hashValue` is sound *here only* because nothing in this fake ever
+  /// derives a key from an `SdfPath` - both sides of the bind/query pair are
+  /// strings, so the key trivially agrees with itself. `USDStageSource` must use
+  /// `SdfPath(path).GetHash()`, which is what `LatticeXformSource` derives at
+  /// runtime from the `SdfPath` Hydra hands it. Copying this implementation into
+  /// a real conformance would leave the runtime read path unable to find any
+  /// prim, silently.
+  func lookupKey(for path: String) -> Int
+  {
+    path.hashValue
+  }
+
   func primPaths() -> [String]
   {
     attributes.keys.sorted()
@@ -44,7 +56,7 @@ private final class FakeStageSource: USDStageSourceRepresentable
 
   func attributeNames(at path: String) -> [String]
   {
-    (attributes[path]?.keys).map { $0.sorted() } ?? []
+    attributes[path]?.keys.sorted() ?? []
   }
 
   func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
@@ -61,29 +73,39 @@ private struct Transform: LatticeComponent, Equatable
   var z: Float
 }
 
-final class PopulationTests: XCTestCase
+/// Decodes the `.float3` a `Transform` is mirrored from. Shared by every test
+/// that populates or writes back transforms.
+private func decodeTransform(_ value: LatticeUSDValue) -> Transform?
+{
+  guard case let .float3(x, y, z) = value else { return nil }
+  return Transform(x: x, y: y, z: z)
+}
+
+@Suite("USD population")
+struct PopulationTests
 {
   /// OpenUSD resolves its plugins/schemas from `plugInfo.json` files that must
-  /// be registered before any USD API is touched; the real-stage tests below
-  /// open a live `UsdStage`, so do it once here for the whole test case.
+  /// be registered before any USD API is touched, and the real-stage tests below
+  /// open a live `UsdStage`.
   ///
   /// `Pixar.Bundler.shared.setup(.resources)` can't be used from a test target:
   /// it locates the `swift-usd_*` resource bundles relative to
-  /// `Bundle.main.resourcePath`, which in an `xctest` process is the test
-  /// runner, not the directory SwiftPM copies those bundles into. Instead we
-  /// find the bundles ourselves - they sit next to (or inside) the test bundle -
-  /// and hand each one's `plugInfo.json` directory straight to USD's
-  /// `PlugRegistry`, which is the same registration `Bundler` ultimately does.
-  override class func setUp()
+  /// `Bundle.main.resourcePath`, which in a test process is the runner, not the
+  /// directory SwiftPM copies those bundles into. Instead we find the bundles
+  /// ourselves - they sit next to (or inside) the test bundle - and hand each
+  /// one's `plugInfo.json` directory straight to USD's `PlugRegistry`, which is
+  /// the same registration `Bundler` ultimately performs.
+  private static let usdPluginsRegistered: Void = registerUSDPlugins()
+
+  init()
   {
-    super.setUp()
-    registerUSDPlugins()
+    _ = Self.usdPluginsRegistered
   }
 
   private static func registerUSDPlugins()
   {
     let fm = FileManager.default
-    let testBundle = Bundle(for: PopulationTests.self)
+    let testBundle = Bundle(for: BundleAnchor.self)
     // Where the copied resource bundles might live, most-likely first.
     let roots = [
       testBundle.bundleURL.deletingLastPathComponent(), // build products dir (siblings)
@@ -125,10 +147,17 @@ final class PopulationTests: XCTestCase
     }
   }
 
-  func testSyncAllBindsOneEntityPerPrim()
+  /// `Bundle(for:)` needs a class to locate the test bundle, and a swift-testing
+  /// suite is a struct - so this exists purely as something to point it at.
+  private final class BundleAnchor {}
+
+  // MARK: - Population, against a fake source
+
+  @Test("syncAll binds exactly one entity per prim, and is idempotent")
+  func syncAllBindsOneEntityPerPrim() throws
   {
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: [
       "/root": [:],
       "/root/childA": [:],
@@ -138,20 +167,21 @@ final class PopulationTests: XCTestCase
 
     sync.syncAll()
 
-    XCTAssertEqual(store.entityCount, 3)
-    XCTAssertEqual(paths.count, 3)
-    XCTAssertNotNil(paths.entity(for: "/root/childA"))
+    #expect(store.entityCount == 3)
+    #expect(paths.count == 3)
+    #expect(paths.entity(for: "/root/childA") != nil)
 
     // Re-running is idempotent: already-bound prims are not re-spawned.
     sync.syncAll()
-    XCTAssertEqual(store.entityCount, 3)
+    #expect(store.entityCount == 3)
   }
 
-  func testPopulateReadsFloat3IntoComponent() throws
+  @Test("populate reads a float3 into a component, skipping prims without the attribute")
+  func populateReadsFloat3IntoComponent() throws
   {
     let store = LatticeStore()
     store.register(Transform.self)
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: [
       "/a": ["xformOp:translate": .float3(1, 2, 3)],
       "/b": ["xformOp:translate": .float3(4, 5, 6)],
@@ -160,24 +190,20 @@ final class PopulationTests: XCTestCase
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
     sync.syncAll()
 
-    let populated = sync.populate(Transform.self, from: "xformOp:translate")
-    { value in
-      guard case let .float3(x, y, z) = value else { return nil }
-      return Transform(x: x, y: y, z: z)
-    }
+    let populated = sync.populate(Transform.self, from: "xformOp:translate", decode: decodeTransform)
+    #expect(populated == 2)
 
-    XCTAssertEqual(populated, 2)
-
-    let entityA = try XCTUnwrap(paths.entity(for: "/a"))
-    let entityC = try XCTUnwrap(paths.entity(for: "/c"))
-    XCTAssertEqual(store.get(Transform.self, for: entityA), Transform(x: 1, y: 2, z: 3))
-    XCTAssertFalse(store.has(Transform.self, on: entityC))
+    let entityA = try #require(paths.entity(for: "/a"))
+    let entityC = try #require(paths.entity(for: "/c"))
+    #expect(store.get(Transform.self, for: entityA) == Transform(x: 1, y: 2, z: 3))
+    #expect(store.has(Transform.self, on: entityC) == false)
   }
 
-  func testPrefetchBringsInOnlyPrimsCarryingRequestedAttributes() throws
+  @Test("prefetch brings in only the prims carrying a requested attribute")
+  func prefetchBringsInOnlyPrimsCarryingRequestedAttributes() throws
   {
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: [
       "/mesh": ["points": .float3Array([LatticeFloat3(0, 0, 0)]), "displayColor": .float3(1, 1, 1)],
       "/xform": ["xformOp:translate": .float3(1, 2, 3)],
@@ -186,37 +212,37 @@ final class PopulationTests: XCTestCase
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
 
     // Prefetch only transforms and points - the working set, not everything.
-    let stats = sync.prefetch
-    { name in
+    let stats = sync.prefetch { name in
       name.hasPrefix("xformOp:") || name == "points"
     }
 
     // Two attributes mirrored, across the two prims that carry them.
-    XCTAssertEqual(stats.mirrored, 2)
-    XCTAssertEqual(store.entityCount, 2)
+    #expect(stats.mirrored == 2)
+    #expect(store.entityCount == 2)
 
     // The prim carrying none of the requested attributes never got an entity.
-    XCTAssertNil(paths.entity(for: "/other"))
-    XCTAssertNotNil(paths.entity(for: "/mesh"))
-    XCTAssertNotNil(paths.entity(for: "/xform"))
+    #expect(paths.entity(for: "/other") == nil)
+    #expect(paths.entity(for: "/mesh") != nil)
+    #expect(paths.entity(for: "/xform") != nil)
 
     // Only the requested attribute was mirrored on /mesh - displayColor was not.
-    let mesh = try XCTUnwrap(paths.entity(for: "/mesh"))
-    XCTAssertEqual(
-      store.getDynamic(LatticeUSDValue.self, forKey: "points", for: mesh),
-      .float3Array([LatticeFloat3(0, 0, 0)])
+    let mesh = try #require(paths.entity(for: "/mesh"))
+    #expect(
+      store.getDynamic(LatticeUSDValue.self, forKey: "points", for: mesh)
+        == .float3Array([LatticeFloat3(0, 0, 0)])
     )
-    XCTAssertNil(store.getDynamic(LatticeUSDValue.self, forKey: "displayColor", for: mesh))
+    #expect(store.getDynamic(LatticeUSDValue.self, forKey: "displayColor", for: mesh) == nil)
   }
 
-  func testPrefetchBinsIdenticalArrayPayloads() throws
+  @Test("prefetch bins byte-identical array payloads onto one shared buffer")
+  func prefetchBinsIdenticalArrayPayloads() throws
   {
     // Three "instances" of the same geometry - identical points arrays, the
     // way USD resolves a referenced mesh on every prim composed from it - plus
     // one prim with distinct geometry and one scalar (never binned).
     let sharedPoints: LatticeUSDValue = .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)])
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: [
       "/instA": ["points": sharedPoints],
       "/instB": ["points": sharedPoints],
@@ -230,71 +256,108 @@ final class PopulationTests: XCTestCase
     // 5 values mirrored; 4 are arrays, of which 2 own buffers (the shared
     // geometry and the unique one) and 2 were binned onto the first-seen copy.
     // The scalar translate is stored inline and never enters the bins.
-    XCTAssertEqual(stats, .init(mirrored: 5, uniqueArrays: 2, sharedArrays: 2))
+    #expect(stats == .init(mirrored: 5, uniqueArrays: 2, sharedArrays: 2))
 
     // Binning must not change what any entity reads back.
-    let instC = try XCTUnwrap(paths.entity(for: "/instC"))
-    XCTAssertEqual(store.getDynamic(LatticeUSDValue.self, forKey: "points", for: instC), sharedPoints)
+    let instC = try #require(paths.entity(for: "/instC"))
+    #expect(store.getDynamic(LatticeUSDValue.self, forKey: "points", for: instC) == sharedPoints)
   }
 
-  func testSyncIncrementalSpawnsAndDespawnsOnlyTheDelta() throws
+  @Test("syncIncremental spawns and despawns only the delta, clearing both indices")
+  func syncIncrementalSpawnsAndDespawnsOnlyTheDelta() throws
   {
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: ["/a": [:], "/b": [:]])
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
 
     // Baseline.
     let first = sync.syncIncremental()
-    XCTAssertEqual(first, .init(added: 2, removed: 0))
-    XCTAssertEqual(store.entityCount, 2)
-    let entityA = try XCTUnwrap(paths.entity(for: "/a"))
+    #expect(first == .init(added: 2, removed: 0))
+    #expect(store.entityCount == 2)
+    let entityA = try #require(paths.entity(for: "/a"))
 
     // Stage gains /c and loses /b.
     source.attributes["/c"] = [:]
     source.attributes["/b"] = nil
 
     let second = sync.syncIncremental()
-    XCTAssertEqual(second, .init(added: 1, removed: 1))
-    XCTAssertEqual(store.entityCount, 2)
-    XCTAssertNil(paths.entity(for: "/b"))
-    XCTAssertNotNil(paths.entity(for: "/c"))
+    #expect(second == .init(added: 1, removed: 1))
+    #expect(store.entityCount == 2)
+    #expect(paths.entity(for: "/b") == nil)
+    #expect(paths.entity(for: "/c") != nil)
+
+    // The *lookup-key* index must be cleared too, not just the string one: a
+    // stale key would resolve to a recycled entity handle rather than nothing,
+    // which is worse than a miss.
+    #expect(paths.entity(forLookupKey: source.lookupKey(for: "/b")) == nil)
+
     // Untouched prim keeps its original entity handle.
-    XCTAssertEqual(paths.entity(for: "/a"), entityA)
+    #expect(paths.entity(for: "/a") == entityA)
 
     // No change -> no work.
-    XCTAssertTrue(sync.syncIncremental().isEmpty)
+    #expect(sync.syncIncremental().isEmpty)
   }
 
-  func testWriteBackChangedPushesOnlyChangedComponents() throws
+  @Test("writeBackChanged pushes only the components that changed since the tick")
+  func writeBackChangedPushesOnlyChangedComponents() throws
   {
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = FakeStageSource(attributes: [
       "/a": ["xformOp:translate": .float3(0, 0, 0)],
       "/b": ["xformOp:translate": .float3(0, 0, 0)],
     ])
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
     sync.syncAll()
-    sync.populate(Transform.self, from: "xformOp:translate")
-    { value in
-      guard case let .float3(x, y, z) = value else { return nil }
-      return Transform(x: x, y: y, z: z)
-    }
+    sync.populate(Transform.self, from: "xformOp:translate", decode: decodeTransform)
 
     // Checkpoint, then mutate only /a's transform.
     let checkpoint = store.currentTick
     store.advanceChangeTick()
-    let entityA = try XCTUnwrap(paths.entity(for: "/a"))
+    let entityA = try #require(paths.entity(for: "/a"))
     store.set(Transform(x: 1, y: 2, z: 3), on: entityA)
 
     let written = sync.writeBackChanged(Transform.self, to: "xformOp:translate", since: checkpoint)
     { .float3($0.x, $0.y, $0.z) }
 
     // Only the changed entity is authored back to the stage.
-    XCTAssertEqual(written, 1)
-    XCTAssertEqual(source.written["/a"]?["xformOp:translate"], .float3(1, 2, 3))
-    XCTAssertNil(source.written["/b"])
+    #expect(written == 1)
+    #expect(source.written["/a"]?["xformOp:translate"] == .float3(1, 2, 3))
+    #expect(source.written["/b"] == nil)
+  }
+
+  // MARK: - Frame phase
+
+  @Test("a full mutate -> tick -> read -> end cycle completes and leaves the phase mutable")
+  func framePhaseCycleCompletes() throws
+  {
+    let store = LatticeStore()
+    let paths = LatticePathTable(framePhase: store.framePhase)
+    let source = FakeStageSource(attributes: ["/a": ["xformOp:translate": .float3(1, 2, 3)]])
+    let sync = USDPopulationSync(store: store, paths: paths, source: source)
+
+    // ── mutation phase ──
+    #expect(store.framePhase.current == .mutable)
+    sync.syncAll()
+    sync.populate(Transform.self, from: "xformOp:translate", decode: decodeTransform)
+    store.advanceChangeTick()
+
+    // ── read phase ──
+    store.framePhase.beginReadPhase()
+    #expect(store.framePhase.current == .readable)
+
+    // Reads must stay legal here - this is what GetPrim() does, once per prim
+    // per frame. If a phase assertion ever landed on the read path by mistake,
+    // this is what would catch it.
+    let entity = try #require(paths.entity(forLookupKey: source.lookupKey(for: "/a")))
+    #expect(store.get(Transform.self, for: entity) == Transform(x: 1, y: 2, z: 3))
+
+    store.framePhase.endReadPhase()
+
+    // Must return to .mutable, or the *next* frame's mutation traps - one frame
+    // away from the actual cause.
+    #expect(store.framePhase.current == .mutable)
   }
 
   // MARK: - Real USDStageSource, backed by a live in-memory UsdStage
@@ -312,16 +375,35 @@ final class PopulationTests: XCTestCase
     return stage
   }
 
-  func testRealSourcePrimPathsFollowTraversalOrder()
+  /// The load-bearing invariant of the whole lookup-key scheme, and the one whose
+  /// failure is *silent*.
+  ///
+  /// Population binds with a key derived from a path **string**
+  /// (`USDPopulationSync` -> `USDStageSource.lookupKey(for:)`). The Hydra read
+  /// path queries with a key derived from an **`SdfPath`**
+  /// (`LatticeXformSource.getLiveXform` -> `path.GetHash()`). Those are different
+  /// call sites in different modules; if they ever stop agreeing, every lookup
+  /// misses, Lattice quietly overrides nothing, and not one thing errors.
+  @Test("the population-side lookup key agrees with the SdfPath-derived runtime key")
+  func lookupKeyAgreesAcrossStringAndSdfPathDerivation()
+  {
+    let stage = makeStage(definingPrims: ["/root/childA"])
+    let source = USDStageSource(stage: stage)
+
+    #expect(source.lookupKey(for: "/root/childA") == SdfPath("/root/childA").GetHash())
+  }
+
+  @Test("primPaths follows depth-first traversal order, excluding the pseudo-root")
+  func realSourcePrimPathsFollowTraversalOrder()
   {
     let stage = makeStage(definingPrims: ["/root", "/root/childA", "/root/childB"])
     let source = USDStageSource(stage: stage)
 
-    // Depth-first traversal, pseudo-root excluded.
-    XCTAssertEqual(source.primPaths(), ["/root", "/root/childA", "/root/childB"])
+    #expect(source.primPaths() == ["/root", "/root/childA", "/root/childB"])
   }
 
-  func testRealSourceReadsScalarAttributeTypes()
+  @Test("scalar attribute types read back through the real source")
+  func realSourceReadsScalarAttributeTypes()
   {
     let stage = makeStage(definingPrims: ["/p"])
     let prim = stage.getPrim(at: "/p")
@@ -331,70 +413,76 @@ final class PopulationTests: XCTestCase
 
     let source = USDStageSource(stage: stage)
 
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "size"), .double(2.5))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "visible"), .bool(true))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "label"), .string("hello"))
+    #expect(source.attributeValue(at: "/p", attribute: "size") == .double(2.5))
+    #expect(source.attributeValue(at: "/p", attribute: "visible") == .bool(true))
+    #expect(source.attributeValue(at: "/p", attribute: "label") == .string("hello"))
   }
 
-  func testRealSourceReadsFloat3AndRoledVariants()
+  @Test("a roled float3 (point3f) maps through the same GfVec3f path as float3")
+  func realSourceReadsFloat3AndRoledVariants()
   {
     let stage = makeStage(definingPrims: ["/p"])
     let prim = stage.getPrim(at: "/p")
     prim.createAttribute(name: "xformOp:translate", typeName: .float3, custom: false)?
       .set(GfVec3f(1, 2, 3))
-    // A roled float3 type (point3f) must map through the same GfVec3f path.
     prim.createAttribute(name: "points", typeName: .point3f, custom: true)?
       .set(GfVec3f(4, 5, 6))
 
     let source = USDStageSource(stage: stage)
 
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(1, 2, 3))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "points"), .float3(4, 5, 6))
+    #expect(source.attributeValue(at: "/p", attribute: "xformOp:translate") == .float3(1, 2, 3))
+    #expect(source.attributeValue(at: "/p", attribute: "points") == .float3(4, 5, 6))
   }
 
-  func testRealSourceReadsDouble3AsFloat3()
+  @Test("double3 is narrowed to float3 on the way in")
+  func realSourceReadsDouble3AsFloat3()
   {
     let stage = makeStage(definingPrims: ["/p"])
-    let prim = stage.getPrim(at: "/p")
-    prim.createAttribute(name: "xformOp:translate", typeName: .double3, custom: false)?
+    stage.getPrim(at: "/p")
+      .createAttribute(name: "xformOp:translate", typeName: .double3, custom: false)?
       .set(GfVec3d(7, 8, 9))
 
     let source = USDStageSource(stage: stage)
 
-    // double3 is narrowed to Float on the way into LatticeUSDValue.float3.
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(7, 8, 9))
+    #expect(source.attributeValue(at: "/p", attribute: "xformOp:translate") == .float3(7, 8, 9))
   }
 
   /// Arrays come back as zero-copy views over the VtArray's own buffer (via
   /// `Overlay.cdata`), so this proves the packed `LatticeFloat3` layout reads
   /// the right elements, the boxed handle keeps the buffer alive after `Get`
   /// returns, and content equality is indistinguishable from an owned copy.
-  func testRealSourceReadsFloat3ArrayAsZeroCopyView() throws
+  @Test("float3[] reads back as a zero-copy view with correct element layout")
+  func realSourceReadsFloat3ArrayAsZeroCopyView() throws
   {
     let stage = makeStage(definingPrims: ["/mesh"])
     let prim = stage.getPrim(at: "/mesh")
     var points = Pixar.VtVec3fArray()
     points.push_back(GfVec3f(1, 2, 3))
     points.push_back(GfVec3f(4, 5, 6))
-    let attribute = try XCTUnwrap(prim.createAttribute(name: "points", typeName: .point3fArray, custom: true))
-    XCTAssertTrue(attribute.Set(points, UsdTimeCode.Default()))
+    let attribute = try #require(prim.createAttribute(name: "points", typeName: .point3fArray, custom: true))
+    #expect(attribute.Set(points, UsdTimeCode.Default()))
 
     let source = USDStageSource(stage: stage)
-    let value = try XCTUnwrap(source.attributeValue(at: "/mesh", attribute: "points"))
+    let value = try #require(source.attributeValue(at: "/mesh", attribute: "points"))
 
     guard case let .float3Array(view) = value
-    else { return XCTFail("expected .float3Array, got \(value)") }
+    else
+    {
+      Issue.record("expected .float3Array, got \(value)")
+      return
+    }
 
     // The 12-byte packed element must land every component, not just index 0.
-    XCTAssertEqual(view.count, 2)
-    XCTAssertEqual(view[0], LatticeFloat3(1, 2, 3))
-    XCTAssertEqual(view[1], LatticeFloat3(4, 5, 6))
+    #expect(view.count == 2)
+    #expect(view[0] == LatticeFloat3(1, 2, 3))
+    #expect(view[1] == LatticeFloat3(4, 5, 6))
 
     // Backing must be invisible: a zero-copy view equals an owned literal.
-    XCTAssertEqual(value, .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)]))
+    #expect(value == .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)]))
   }
 
-  func testRealSourceReturnsNilForMissingPrimAttributeOrValue()
+  @Test("a missing prim, missing attribute, or unauthored value all read as nil")
+  func realSourceReturnsNilForMissingPrimAttributeOrValue()
   {
     let stage = makeStage(definingPrims: ["/p"])
     // Declared but never authored and has no fallback -> no value.
@@ -402,12 +490,13 @@ final class PopulationTests: XCTestCase
 
     let source = USDStageSource(stage: stage)
 
-    XCTAssertNil(source.attributeValue(at: "/missing", attribute: "size"))
-    XCTAssertNil(source.attributeValue(at: "/p", attribute: "nope"))
-    XCTAssertNil(source.attributeValue(at: "/p", attribute: "unset"))
+    #expect(source.attributeValue(at: "/missing", attribute: "size") == nil)
+    #expect(source.attributeValue(at: "/p", attribute: "nope") == nil)
+    #expect(source.attributeValue(at: "/p", attribute: "unset") == nil)
   }
 
-  func testRealSourceSetAttributeValueRoundTrips()
+  @Test("setAttributeValue authors onto the stage and overwrites on re-author")
+  func realSourceSetAttributeValueRoundTrips()
   {
     let stage = makeStage(definingPrims: ["/p"])
     // The attribute must already exist; setAttributeValue authors, not creates.
@@ -415,19 +504,19 @@ final class PopulationTests: XCTestCase
 
     let source = USDStageSource(stage: stage)
 
-    XCTAssertTrue(source.setAttributeValue(.float3(1, 2, 3), at: "/p", attribute: "xformOp:translate"))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(1, 2, 3))
+    #expect(source.setAttributeValue(.float3(1, 2, 3), at: "/p", attribute: "xformOp:translate"))
+    #expect(source.attributeValue(at: "/p", attribute: "xformOp:translate") == .float3(1, 2, 3))
 
-    // Authoring again overwrites the prior value.
-    XCTAssertTrue(source.setAttributeValue(.float3(9, 9, 9), at: "/p", attribute: "xformOp:translate"))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "xformOp:translate"), .float3(9, 9, 9))
+    #expect(source.setAttributeValue(.float3(9, 9, 9), at: "/p", attribute: "xformOp:translate"))
+    #expect(source.attributeValue(at: "/p", attribute: "xformOp:translate") == .float3(9, 9, 9))
   }
 
   /// The write path is the read path's type mapping in reverse: `.int` must
   /// coerce to the attribute's exact int width, and array values must build
   /// the exact VtArray type. Round-tripping through a live stage proves both
   /// directions agree.
-  func testRealSourceSetAttributeValueRoundTripsWidthsAndArrays() throws
+  @Test("int widths narrow and arrays build the exact VtArray type on write-back")
+  func realSourceSetAttributeValueRoundTripsWidthsAndArrays() throws
   {
     let stage = makeStage(definingPrims: ["/p"])
     let prim = stage.getPrim(at: "/p")
@@ -437,30 +526,31 @@ final class PopulationTests: XCTestCase
     let source = USDStageSource(stage: stage)
 
     // `.int` carries Int64; the attribute is 32-bit `int` - Set must narrow.
-    XCTAssertTrue(source.setAttributeValue(.int(7), at: "/p", attribute: "count"))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "count"), .int(7))
+    #expect(source.setAttributeValue(.int(7), at: "/p", attribute: "count"))
+    #expect(source.attributeValue(at: "/p", attribute: "count") == .int(7))
 
     // An owned array value authors a VtVec3fArray and reads back as an
     // (equal-by-content) zero-copy view.
     let points: LatticeUSDValue = .float3Array([LatticeFloat3(1, 2, 3), LatticeFloat3(4, 5, 6)])
-    XCTAssertTrue(source.setAttributeValue(points, at: "/p", attribute: "points"))
-    XCTAssertEqual(source.attributeValue(at: "/p", attribute: "points"), points)
+    #expect(source.setAttributeValue(points, at: "/p", attribute: "points"))
+    #expect(source.attributeValue(at: "/p", attribute: "points") == points)
   }
 
-  func testRealSourceSetAttributeValueFailsForMissingPrimOrAttribute()
+  @Test("setAttributeValue fails for a missing prim or a missing attribute")
+  func realSourceSetAttributeValueFailsForMissingPrimOrAttribute()
   {
     let stage = makeStage(definingPrims: ["/p"])
     let source = USDStageSource(stage: stage)
 
-    // No prim at path, and an existing prim without the named attribute.
-    XCTAssertFalse(source.setAttributeValue(.double(1), at: "/missing", attribute: "size"))
-    XCTAssertFalse(source.setAttributeValue(.double(1), at: "/p", attribute: "size"))
+    #expect(source.setAttributeValue(.double(1), at: "/missing", attribute: "size") == false)
+    #expect(source.setAttributeValue(.double(1), at: "/p", attribute: "size") == false)
   }
 
   /// End-to-end: the same population/write-back loop the `FakeStageSource`
   /// tests exercise, but driven by the real OpenUSDKit-backed source against a
   /// live stage - proving the C++-interop read/write path wires up correctly.
-  func testPopulationSyncDrivesRealStageEndToEnd() throws
+  @Test("population sync drives a real stage end to end")
+  func populationSyncDrivesRealStageEndToEnd() throws
   {
     let stage = makeStage(definingPrims: ["/a", "/b"])
     for path in ["/a", "/b"]
@@ -471,22 +561,21 @@ final class PopulationTests: XCTestCase
     stage.getPrim(at: "/b").attribute(named: "xformOp:translate")?.set(GfVec3f(4, 5, 6))
 
     let store = LatticeStore()
-    let paths = LatticePathTable()
+    let paths = LatticePathTable(framePhase: store.framePhase)
     let source = USDStageSource(stage: stage)
     let sync = USDPopulationSync(store: store, paths: paths, source: source)
 
     sync.syncAll()
-    XCTAssertEqual(store.entityCount, 2)
+    #expect(store.entityCount == 2)
 
-    let populated = sync.populate(Transform.self, from: "xformOp:translate")
-    { value in
-      guard case let .float3(x, y, z) = value else { return nil }
-      return Transform(x: x, y: y, z: z)
-    }
-    XCTAssertEqual(populated, 2)
+    let populated = sync.populate(Transform.self, from: "xformOp:translate", decode: decodeTransform)
+    #expect(populated == 2)
 
-    let entityA = try XCTUnwrap(paths.entity(for: "/a"))
-    XCTAssertEqual(store.get(Transform.self, for: entityA), Transform(x: 1, y: 2, z: 3))
+    // Look the entity up the way the *runtime* does - through an SdfPath-derived
+    // key - not the way population bound it. Anything else would only prove
+    // lookupKey agrees with itself.
+    let entityA = try #require(paths.entity(forLookupKey: SdfPath("/a").GetHash()))
+    #expect(store.get(Transform.self, for: entityA) == Transform(x: 1, y: 2, z: 3))
 
     // Mutate one entity in the store, then push only the change back onto USD.
     let checkpoint = store.currentTick
@@ -495,10 +584,10 @@ final class PopulationTests: XCTestCase
 
     let written = sync.writeBackChanged(Transform.self, to: "xformOp:translate", since: checkpoint)
     { .float3($0.x, $0.y, $0.z) }
-    XCTAssertEqual(written, 1)
+    #expect(written == 1)
 
     // The authored value is visible when the stage is read back directly.
-    XCTAssertEqual(source.attributeValue(at: "/a", attribute: "xformOp:translate"), .float3(10, 20, 30))
-    XCTAssertEqual(source.attributeValue(at: "/b", attribute: "xformOp:translate"), .float3(4, 5, 6))
+    #expect(source.attributeValue(at: "/a", attribute: "xformOp:translate") == .float3(10, 20, 30))
+    #expect(source.attributeValue(at: "/b", attribute: "xformOp:translate") == .float3(4, 5, 6))
   }
 }

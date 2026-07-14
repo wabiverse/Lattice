@@ -23,18 +23,10 @@ LatticeHydraSceneIndexRefPtr LatticeHydraSceneIndex::New(
 LatticeHydraSceneIndex::LatticeHydraSceneIndex(const HdSceneIndexBaseRefPtr &inputSceneIndex,
                                                LatticeUSD::LatticeXformSource *latticeSource)
     : HdSingleInputFilteringSceneIndexBase(inputSceneIndex), _latticeSource(latticeSource)
-{
-  if (_latticeSource) {
-    swift_retain(_latticeSource);
-  }
-}
+{}
 
 LatticeHydraSceneIndex::~LatticeHydraSceneIndex()
-{
-  if (_latticeSource) {
-    swift_release(_latticeSource);
-  }
-}
+{}
 
 HdSceneIndexPrim LatticeHydraSceneIndex::GetPrim(const SdfPath &primPath) const
 {
@@ -43,12 +35,13 @@ HdSceneIndexPrim LatticeHydraSceneIndex::GetPrim(const SdfPath &primPath) const
     return prim;
   }
 
-  Pixar::GfMatrix4d xf;
+  Pixar::GfMatrix4d xf(1.0);
   if (_latticeSource->didGetLiveXform(xf, primPath)) {
     HdContainerDataSourceEditor editor(prim.dataSource);
     editor.Set(HdXformSchema::GetDefaultLocator(),
                HdXformSchema::Builder()
                    .SetMatrix(HdRetainedTypedSampledDataSource<GfMatrix4d>::New(xf))
+                   .SetResetXformStack(HdRetainedTypedSampledDataSource<bool>::New(true))
                    .Build());
     prim.dataSource = editor.Finish();
   }

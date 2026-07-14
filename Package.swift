@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
   name: "Lattice",
   platforms: [
-    .macOS(.v14),
+    .macOS(.v15),
     .visionOS(.v1),
     .iOS(.v17),
     .tvOS(.v17),

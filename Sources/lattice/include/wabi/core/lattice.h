@@ -4152,7 +4152,36 @@ struct LatticeCore_LatticeEntity {
   _Alignas(4) char _storage[8];
 };
 
-SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A9PathTableCACycfC(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init()
+SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A10FramePhaseCACycfC(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init()
+// Stub struct to be used to pass/return values to/from Swift functions.
+struct swift_interop_returnStub_LatticeCore_uint8_t_0_1 {
+  uint8_t _1;
+};
+
+static SWIFT_C_INLINE_THUNK void swift_interop_returnDirect_LatticeCore_uint8_t_0_1(char * _Nonnull result, struct swift_interop_returnStub_LatticeCore_uint8_t_0_1 value) {
+  memcpy(result + 0, &value._1, 1);
+}
+
+SWIFT_EXTERN struct swift_interop_returnStub_LatticeCore_uint8_t_0_1 $s11LatticeCore0A10FramePhaseC7currentAC0D0Ovg(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s11LatticeCore0A10FramePhaseC09beginReadD0yyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // beginReadPhase()
+SWIFT_EXTERN void $s11LatticeCore0A10FramePhaseC07endReadD0yyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // endReadPhase()
+// Stub struct to be used to pass/return values to/from Swift functions.
+struct swift_interop_passStub_LatticeCore_uint8_t_0_1 {
+  uint8_t _1;
+};
+
+static SWIFT_C_INLINE_THUNK struct swift_interop_passStub_LatticeCore_uint8_t_0_1 swift_interop_passDirect_LatticeCore_uint8_t_0_1(const char * _Nonnull value) {
+  struct swift_interop_passStub_LatticeCore_uint8_t_0_1 result;
+  memcpy(&result._1, value + 0, 1);
+  return result;
+}
+
+SWIFT_EXTERN ptrdiff_t $s11LatticeCore0A10FramePhaseC0D0O9hashValueSivg(struct swift_interop_passStub_LatticeCore_uint8_t_0_1 _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+struct LatticeCore_LatticeFramePhaseNested_Phase {
+  _Alignas(1) char _storage[1];
+};
+
+SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A9PathTableC10framePhaseAcA0a5FrameF0C_tcfC(void * _Nonnull framePhase, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(framePhase:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_returnStub_LatticeCore_uint64_t_0_8_uint8_t_8_9 {
   uint64_t _1;
@@ -4190,8 +4219,8 @@ static SWIFT_C_INLINE_THUNK void swift_interop_returnDirect_LatticeCore_uint64_t
 }
 
 SWIFT_EXTERN struct swift_interop_returnStub_LatticeCore_uint64_t_0_8_uint64_t_8_16 $s11LatticeCore0A9PathTableC4path3forSSSgAA0A6EntityV_tF(struct swift_interop_passStub_LatticeCore_uint64_t_0_8 entity, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // path(for:)
-SWIFT_EXTERN void $s11LatticeCore0A9PathTableC4bind_2toyAA0A6EntityV_SStF(struct swift_interop_passStub_LatticeCore_uint64_t_0_8 entity, struct swift_interop_passStub_LatticeCore_uint64_t_0_8_void_ptr_8_16 path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // bind(_:to:)
-SWIFT_EXTERN struct swift_interop_returnStub_LatticeCore_uint64_t_0_8_uint64_t_8_16 $s11LatticeCore0A9PathTableC6unbindySSSgAA0A6EntityVF(struct swift_interop_passStub_LatticeCore_uint64_t_0_8 entity, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // unbind(_:)
+SWIFT_EXTERN void $s11LatticeCore0A9PathTableC4bind_2to9lookupKeyyAA0A6EntityV_SSSitF(struct swift_interop_passStub_LatticeCore_uint64_t_0_8 entity, struct swift_interop_passStub_LatticeCore_uint64_t_0_8_void_ptr_8_16 path, ptrdiff_t lookupKey, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // bind(_:to:lookupKey:)
+SWIFT_EXTERN void $s11LatticeCore0A9PathTableC6unbindyyAA0A6EntityVF(struct swift_interop_passStub_LatticeCore_uint64_t_0_8 entity, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // unbind(_:)
 SWIFT_EXTERN ptrdiff_t $s11LatticeCore0A9PathTableC5countSivg(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
 SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A9SchedulerCACycfC(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init()
 SWIFT_EXTERN void $s11LatticeCore0A9SchedulerC3addyyAA0A6SystemVF(const void * _Nonnull system, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // add(_:)
@@ -4211,7 +4240,8 @@ SWIFT_EXTERN uint64_t $s11LatticeCore0A5StoreC5frames6UInt64Vvg(SWIFT_CONTEXT vo
 SWIFT_EXTERN void $s11LatticeCore0A5StoreC5frames6UInt64Vvs(uint64_t value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
 SWIFT_EXTERN uint64_t $s11LatticeCore0A5StoreC11currentTicks6UInt64Vvg(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
 SWIFT_EXTERN void $s11LatticeCore0A5StoreC11currentTicks6UInt64Vvs(uint64_t value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
-SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A5StoreCACycfC(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init()
+SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A5StoreC10framePhaseAA0a5FrameE0Cvg(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void * _Nonnull $s11LatticeCore0A5StoreC10framePhaseAcA0a5FrameE0C_tcfC(void * _Nonnull framePhase, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(framePhase:)
 SWIFT_EXTERN void $s11LatticeCore0A5StoreC12advanceFrameyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // advanceFrame()
 SWIFT_EXTERN void $s11LatticeCore0A5StoreC17advanceChangeTickyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // advanceChangeTick()
 SWIFT_EXTERN struct swift_interop_returnStub_LatticeCore_uint64_t_0_8 $s11LatticeCore0A5StoreC5spawnAA0A6EntityVyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // spawn()
@@ -4433,6 +4463,290 @@ struct implClassFor<LatticeCore::LatticeEntity> { using type = LatticeCore::_imp
 
 namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
 
+namespace __LatticeFramePhaseNested {
+
+class SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O") Phase;
+
+} // namespace __LatticeFramePhaseNested
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeCore::__LatticeFramePhaseNested::Phase> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
+class SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC") LatticeFramePhase;
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeCore::LatticeFramePhase> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
+/// The frame’s read/write phase, shared by every structure that Hydra may pull
+/// through concurrently.
+/// Hydra calls <code>GetPrim()</code> from multiple threads. Concurrent <em>reads</em> of the
+/// store and path table are safe; a read overlapping a <em>write</em> is not - a
+/// <code>Dictionary</code> mutation racing a reader is memory corruption, not a torn
+/// value. Nothing in the type system enforces the split, so it is asserted:
+/// violations trap in debug and compile out in release.
+/// \code
+/// mutate → advanceChangeTick() → Tick() → beginReadPhase()
+///        → Hydra pulls GetPrim() → endReadPhase()
+///
+/// \endcode
+namespace _impl {
+
+class _impl_LatticeFramePhase;
+// Type metadata accessor for LatticeFramePhase
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s11LatticeCore0A10FramePhaseCMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC") LatticeFramePhase final : public swift::_impl::RefCountedClass {
+public:
+  using RefCountedClass::RefCountedClass;
+  using RefCountedClass::operator=;
+  using Phase=__LatticeFramePhaseNested::Phase;
+  static SWIFT_INLINE_THUNK LatticeFramePhase init() SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseCACycfc");
+  SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase getCurrent() SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC7currentAC0D0Ovp");
+  SWIFT_INLINE_THUNK void beginReadPhase() SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC09beginReadD0yyF");
+  SWIFT_INLINE_THUNK void endReadPhase() SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC07endReadD0yyF");
+protected:
+  SWIFT_INLINE_THUNK LatticeFramePhase(void * _Nonnull ptr) noexcept : RefCountedClass(ptr) {}
+private:
+  friend class _impl::_impl_LatticeFramePhase;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s11LatticeCore0A10FramePhaseCD;
+  static inline constexpr $s11LatticeCore0A10FramePhaseCD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_LatticeFramePhase {
+public:
+static SWIFT_INLINE_THUNK LatticeFramePhase makeRetained(void * _Nonnull ptr) noexcept { return LatticeFramePhase(ptr); }
+};
+
+} // namespace _impl
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeCore::LatticeFramePhase> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeCore::_impl::$s11LatticeCore0A10FramePhaseCMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+struct implClassFor<LatticeCore::LatticeFramePhase> { using type = LatticeCore::_impl::_impl_LatticeFramePhase; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
+
+namespace __LatticeFramePhaseNested {
+
+namespace _impl {
+
+class _impl_Phase;
+
+// Type metadata accessor for Phase
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s11LatticeCore0A10FramePhaseC0D0OMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O") Phase final {
+public:
+  SWIFT_INLINE_THUNK ~Phase() noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->destroy(_getOpaquePointer(), metadata._0);
+  }
+  SWIFT_INLINE_THUNK Phase(const Phase &other) noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  }
+  SWIFT_INLINE_THUNK Phase &operator =(const Phase &other) noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->assignWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  return *this;
+  }
+
+  enum class cases {
+    mutable_ SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O7mutableyA2EmF"),
+    readable SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O8readableyA2EmF")
+  };
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"  // allow use of inline static data member
+  inline const static struct _impl_mutable {  // impl struct for case mutable
+    SWIFT_INLINE_THUNK constexpr operator cases() const {
+      return cases::mutable_;
+    }
+    SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase operator()() const;
+  } mutable_ SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O7mutableyA2EmF");
+  SWIFT_INLINE_THUNK bool isMutable_() const;
+
+  inline const static struct _impl_readable {  // impl struct for case readable
+    SWIFT_INLINE_THUNK constexpr operator cases() const {
+      return cases::readable;
+    }
+    SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase operator()() const;
+  } readable SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O8readableyA2EmF");
+  SWIFT_INLINE_THUNK bool isReadable() const;
+
+#pragma clang diagnostic pop
+  SWIFT_INLINE_THUNK operator cases() const {
+    switch (_getEnumTag()) {
+      case 0: return cases::mutable_;
+      case 1: return cases::readable;
+      default: abort();
+    }
+  }
+
+  SWIFT_INLINE_THUNK swift::Int getHashValue() const SWIFT_SYMBOL("s:11LatticeCore0A10FramePhaseC0D0O9hashValueSivp");
+private:
+  SWIFT_INLINE_THUNK Phase() noexcept {}
+  static SWIFT_INLINE_THUNK Phase _make() noexcept { return Phase(); }
+  SWIFT_INLINE_THUNK const char * _Nonnull _getOpaquePointer() const noexcept { return _storage; }
+  SWIFT_INLINE_THUNK char * _Nonnull _getOpaquePointer() noexcept { return _storage; }
+
+  SWIFT_INLINE_THUNK char * _Nonnull _destructiveProjectEnumData() noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    const auto *enumVWTable = reinterpret_cast<swift::_impl::EnumValueWitnessTable *>(vwTable);
+    enumVWTable->destructiveProjectEnumData(_getOpaquePointer(), metadata._0);
+    return _getOpaquePointer();
+  }
+  SWIFT_INLINE_THUNK void _destructiveInjectEnumTag(unsigned tag) noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    const auto *enumVWTable = reinterpret_cast<swift::_impl::EnumValueWitnessTable *>(vwTable);
+    enumVWTable->destructiveInjectEnumTag(_getOpaquePointer(), tag, metadata._0);
+  }
+  SWIFT_INLINE_THUNK unsigned _getEnumTag() const noexcept {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    const auto *enumVWTable = reinterpret_cast<swift::_impl::EnumValueWitnessTable *>(vwTable);
+    return enumVWTable->getEnumTag(_getOpaquePointer(), metadata._0);
+  }
+  alignas(1) char _storage[1];
+  friend class _impl::_impl_Phase;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s11LatticeCore0A10FramePhaseC0D0OD;
+  static inline constexpr $s11LatticeCore0A10FramePhaseC0D0OD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_Phase {
+public:
+  static SWIFT_INLINE_THUNK char * _Nonnull getOpaquePointer(__LatticeFramePhaseNested::Phase &object) { return object._getOpaquePointer(); }
+  static SWIFT_INLINE_THUNK const char * _Nonnull getOpaquePointer(const __LatticeFramePhaseNested::Phase &object) { return object._getOpaquePointer(); }
+  template<class T>
+  static SWIFT_INLINE_PRIVATE_HELPER __LatticeFramePhaseNested::Phase returnNewValue(T callable) {
+    auto result = __LatticeFramePhaseNested::Phase::_make();
+    callable(result._getOpaquePointer());
+    return result;
+  }
+  static SWIFT_INLINE_THUNK void initializeWithTake(char * _Nonnull destStorage, char * _Nonnull srcStorage) {
+    auto metadata = _impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithTake(destStorage, srcStorage, metadata._0);
+  }
+};
+
+} // namespace _impl
+
+
+} // namespace __LatticeFramePhaseNested
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeCore::__LatticeFramePhaseNested::Phase> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeCore::__LatticeFramePhaseNested::_impl::$s11LatticeCore0A10FramePhaseC0D0OMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+inline const constexpr bool isValueType<LatticeCore::__LatticeFramePhaseNested::Phase> = true;
+template<>
+struct implClassFor<LatticeCore::__LatticeFramePhaseNested::Phase> { using type = LatticeCore::__LatticeFramePhaseNested::_impl::_impl_Phase; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
+
 class SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC") LatticePathTable;
 } // end namespace 
 
@@ -4466,11 +4780,16 @@ class SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC") LatticePathTable final : publ
 public:
   using RefCountedClass::RefCountedClass;
   using RefCountedClass::operator=;
-  static SWIFT_INLINE_THUNK LatticePathTable init() SWIFT_SYMBOL("s:11LatticeCore0A9PathTableCACycfc");
+  static SWIFT_INLINE_THUNK LatticePathTable init(const LatticeFramePhase& framePhase) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC10framePhaseAcA0a5FrameF0C_tcfc");
   SWIFT_INLINE_THUNK swift::Optional<LatticeEntity> entity(const swift::String& path) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC6entity3forAA0A6EntityVSgSS_tF");
   SWIFT_INLINE_THUNK swift::Optional<swift::String> path(const LatticeEntity& entity) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC4path3forSSSgAA0A6EntityV_tF");
-  SWIFT_INLINE_THUNK void bind(const LatticeEntity& entity, const swift::String& path) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC4bind_2toyAA0A6EntityV_SStF");
-  SWIFT_INLINE_THUNK swift::Optional<swift::String> unbind(const LatticeEntity& entity) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC6unbindySSSgAA0A6EntityVF");
+/// Binds <code>entity</code> to <code>path</code>. <code>lookupKey</code> is required, not optional: a binding
+/// without one is invisible to the runtime read path, which fails silently.
+  SWIFT_INLINE_THUNK void bind(const LatticeEntity& entity, const swift::String& path, swift::Int lookupKey) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC4bind_2to9lookupKeyyAA0A6EntityV_SSSitF");
+/// Removes every index entry for <code>entity</code>. Deliberately takes no key - it
+/// recovers the one actually used at bind time, so it cannot be unbound with
+/// the wrong key and leave a stale entry behind.
+  SWIFT_INLINE_THUNK void unbind(const LatticeEntity& entity) SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC6unbindyyAA0A6EntityVF");
   SWIFT_INLINE_THUNK swift::Int getCount() SWIFT_SYMBOL("s:11LatticeCore0A9PathTableC5countSivp");
 protected:
   SWIFT_INLINE_THUNK LatticePathTable(void * _Nonnull ptr) noexcept : RefCountedClass(ptr) {}
@@ -4661,7 +4980,8 @@ public:
   SWIFT_INLINE_THUNK void setFrame(uint64_t value) SWIFT_SYMBOL("s:11LatticeCore0A5StoreC5frames6UInt64Vvp");
   SWIFT_INLINE_THUNK uint64_t getCurrentTick() SWIFT_SYMBOL("s:11LatticeCore0A5StoreC11currentTicks6UInt64Vvp");
   SWIFT_INLINE_THUNK void setCurrentTick(uint64_t value) SWIFT_SYMBOL("s:11LatticeCore0A5StoreC11currentTicks6UInt64Vvp");
-  static SWIFT_INLINE_THUNK LatticeStore init() SWIFT_SYMBOL("s:11LatticeCore0A5StoreCACycfc");
+  SWIFT_INLINE_THUNK LatticeFramePhase getFramePhase() SWIFT_SYMBOL("s:11LatticeCore0A5StoreC10framePhaseAA0a5FrameE0Cvp");
+  static SWIFT_INLINE_THUNK LatticeStore init(const LatticeFramePhase& framePhase) SWIFT_SYMBOL("s:11LatticeCore0A5StoreC10framePhaseAcA0a5FrameE0C_tcfc");
   SWIFT_INLINE_THUNK void advanceFrame() SWIFT_SYMBOL("s:11LatticeCore0A5StoreC12advanceFrameyyF");
 /// Advances <code>currentTick</code> by one. Values written after this get the new
 /// tick, so a reader that recorded the old tick sees them as changed.
@@ -4842,8 +5162,44 @@ namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
     LatticeCore::_impl::swift_interop_returnDirect_LatticeCore_uint64_t_0_8_void_ptr_8_16(result, LatticeCore::_impl::$s11LatticeCore0A6EntityV11descriptionSSvg(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(_getOpaquePointer())));
   });
   }
-  SWIFT_INLINE_THUNK LatticePathTable LatticePathTable::init() {
-  return _impl::_impl_LatticePathTable::makeRetained(LatticeCore::_impl::$s11LatticeCore0A9PathTableCACycfC(swift::TypeMetadataTrait<LatticePathTable>::getTypeMetadata()));
+  SWIFT_INLINE_THUNK LatticeFramePhase LatticeFramePhase::init() {
+  return _impl::_impl_LatticeFramePhase::makeRetained(LatticeCore::_impl::$s11LatticeCore0A10FramePhaseCACycfC(swift::TypeMetadataTrait<LatticeFramePhase>::getTypeMetadata()));
+  }
+  SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase LatticeFramePhase::getCurrent() {
+  return LatticeCore::__LatticeFramePhaseNested::_impl::_impl_Phase::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeCore::_impl::swift_interop_returnDirect_LatticeCore_uint8_t_0_1(result, LatticeCore::_impl::$s11LatticeCore0A10FramePhaseC7currentAC0D0Ovg(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this)));
+  });
+  }
+  SWIFT_INLINE_THUNK void LatticeFramePhase::beginReadPhase() {
+  LatticeCore::_impl::$s11LatticeCore0A10FramePhaseC09beginReadD0yyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeFramePhase::endReadPhase() {
+  LatticeCore::_impl::$s11LatticeCore0A10FramePhaseC07endReadD0yyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase __LatticeFramePhaseNested::Phase::_impl_mutable::operator()() const {
+    auto result = __LatticeFramePhaseNested::Phase::_make();
+    result._destructiveInjectEnumTag(0);
+    return result;
+  }
+  SWIFT_INLINE_THUNK  bool __LatticeFramePhaseNested::Phase::isMutable_() const {
+    return *this == __LatticeFramePhaseNested::Phase::mutable_;
+  }
+  SWIFT_INLINE_THUNK __LatticeFramePhaseNested::Phase __LatticeFramePhaseNested::Phase::_impl_readable::operator()() const {
+    auto result = __LatticeFramePhaseNested::Phase::_make();
+    result._destructiveInjectEnumTag(1);
+    return result;
+  }
+  SWIFT_INLINE_THUNK  bool __LatticeFramePhaseNested::Phase::isReadable() const {
+    return *this == __LatticeFramePhaseNested::Phase::readable;
+  }
+  SWIFT_INLINE_THUNK swift::Int __LatticeFramePhaseNested::Phase::getHashValue() const {
+  return LatticeCore::_impl::$s11LatticeCore0A10FramePhaseC0D0O9hashValueSivg(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint8_t_0_1(_getOpaquePointer()));
+  }
+  SWIFT_INLINE_THUNK LatticePathTable LatticePathTable::init(const LatticeFramePhase& framePhase) {
+  alignas(alignof(LatticeFramePhase)) char copyBuffer_consumedParamCopy_framePhase[sizeof(LatticeFramePhase)];
+  auto &consumedParamCopy_framePhase = *(new(copyBuffer_consumedParamCopy_framePhase) LatticeFramePhase(framePhase));
+  swift::_impl::ConsumedValueStorageDestroyer<LatticeFramePhase> storageGuard_consumedParamCopy_framePhase(consumedParamCopy_framePhase);
+  return _impl::_impl_LatticePathTable::makeRetained(LatticeCore::_impl::$s11LatticeCore0A9PathTableC10framePhaseAcA0a5FrameF0C_tcfC(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_framePhase), swift::TypeMetadataTrait<LatticePathTable>::getTypeMetadata()));
   }
   SWIFT_INLINE_THUNK swift::Optional<LatticeEntity> LatticePathTable::entity(const swift::String& path) {
   return swift::_impl::_impl_Optional<LatticeEntity>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
@@ -4855,13 +5211,11 @@ namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
     LatticeCore::_impl::swift_interop_returnDirect_LatticeCore_uint64_t_0_8_uint64_t_8_16(result, LatticeCore::_impl::$s11LatticeCore0A9PathTableC4path3forSSSgAA0A6EntityV_tF(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(LatticeCore::_impl::_impl_LatticeEntity::getOpaquePointer(entity)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this)));
   });
   }
-  SWIFT_INLINE_THUNK void LatticePathTable::bind(const LatticeEntity& entity, const swift::String& path) {
-  LatticeCore::_impl::$s11LatticeCore0A9PathTableC4bind_2toyAA0A6EntityV_SStF(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(LatticeCore::_impl::_impl_LatticeEntity::getOpaquePointer(entity)), LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8_void_ptr_8_16(swift::_impl::_impl_String::getOpaquePointer(path)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  SWIFT_INLINE_THUNK void LatticePathTable::bind(const LatticeEntity& entity, const swift::String& path, swift::Int lookupKey) {
+  LatticeCore::_impl::$s11LatticeCore0A9PathTableC4bind_2to9lookupKeyyAA0A6EntityV_SSSitF(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(LatticeCore::_impl::_impl_LatticeEntity::getOpaquePointer(entity)), LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8_void_ptr_8_16(swift::_impl::_impl_String::getOpaquePointer(path)), lookupKey, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
-  SWIFT_INLINE_THUNK swift::Optional<swift::String> LatticePathTable::unbind(const LatticeEntity& entity) {
-  return swift::_impl::_impl_Optional<swift::String>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
-    LatticeCore::_impl::swift_interop_returnDirect_LatticeCore_uint64_t_0_8_uint64_t_8_16(result, LatticeCore::_impl::$s11LatticeCore0A9PathTableC6unbindySSSgAA0A6EntityVF(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(LatticeCore::_impl::_impl_LatticeEntity::getOpaquePointer(entity)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this)));
-  });
+  SWIFT_INLINE_THUNK void LatticePathTable::unbind(const LatticeEntity& entity) {
+  LatticeCore::_impl::$s11LatticeCore0A9PathTableC6unbindyyAA0A6EntityVF(LatticeCore::_impl::swift_interop_passDirect_LatticeCore_uint64_t_0_8(LatticeCore::_impl::_impl_LatticeEntity::getOpaquePointer(entity)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
   SWIFT_INLINE_THUNK swift::Int LatticePathTable::getCount() {
   return LatticeCore::_impl::$s11LatticeCore0A9PathTableC5countSivg(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
@@ -4895,8 +5249,14 @@ namespace LatticeCore SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeCore") {
   SWIFT_INLINE_THUNK void LatticeStore::setCurrentTick(uint64_t value) {
   LatticeCore::_impl::$s11LatticeCore0A5StoreC11currentTicks6UInt64Vvs(value, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
-  SWIFT_INLINE_THUNK LatticeStore LatticeStore::init() {
-  return _impl::_impl_LatticeStore::makeRetained(LatticeCore::_impl::$s11LatticeCore0A5StoreCACycfC(swift::TypeMetadataTrait<LatticeStore>::getTypeMetadata()));
+  SWIFT_INLINE_THUNK LatticeFramePhase LatticeStore::getFramePhase() {
+  return _impl::_impl_LatticeFramePhase::makeRetained(LatticeCore::_impl::$s11LatticeCore0A5StoreC10framePhaseAA0a5FrameE0Cvg(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this)));
+  }
+  SWIFT_INLINE_THUNK LatticeStore LatticeStore::init(const LatticeFramePhase& framePhase) {
+  alignas(alignof(LatticeFramePhase)) char copyBuffer_consumedParamCopy_framePhase[sizeof(LatticeFramePhase)];
+  auto &consumedParamCopy_framePhase = *(new(copyBuffer_consumedParamCopy_framePhase) LatticeFramePhase(framePhase));
+  swift::_impl::ConsumedValueStorageDestroyer<LatticeFramePhase> storageGuard_consumedParamCopy_framePhase(consumedParamCopy_framePhase);
+  return _impl::_impl_LatticeStore::makeRetained(LatticeCore::_impl::$s11LatticeCore0A5StoreC10framePhaseAcA0a5FrameE0C_tcfC(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_framePhase), swift::TypeMetadataTrait<LatticeStore>::getTypeMetadata()));
   }
   SWIFT_INLINE_THUNK void LatticeStore::advanceFrame() {
   LatticeCore::_impl::$s11LatticeCore0A5StoreC12advanceFrameyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));

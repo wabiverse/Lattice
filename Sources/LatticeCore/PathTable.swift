@@ -23,51 +23,70 @@ import Foundation
 /// cares about".
 public final class LatticePathTable
 {
-  private var pathToEntity: [String: LatticeEntity] = [:]
-  private var entityToPath: [LatticeEntity: String] = [:]
+  private var byPath: [String: LatticeEntity] = [:]
+  private var byEntity: [LatticeEntity: (path: String, lookupKey: Int)] = [:]
+  private var byLookupKey: [Int: LatticeEntity] = [:]
+  private let framePhase: LatticeFramePhase
 
-  public init() {}
+  public init(framePhase: LatticeFramePhase)
+  {
+    self.framePhase = framePhase
+  }
 
   public func entity(for path: String) -> LatticeEntity?
   {
-    pathToEntity[path]
+    byPath[path]
+  }
+
+  /// Allocation-free lookup for the runtime read path. `key` must be derived
+  /// the same way it was at ``bind(_:to:lookupKey:)``.
+  public func entity(forLookupKey key: Int) -> LatticeEntity?
+  {
+    byLookupKey[key]
   }
 
   public func path(for entity: LatticeEntity) -> String?
   {
-    entityToPath[entity]
+    byEntity[entity]?.path
   }
 
-  public func bind(_ entity: LatticeEntity, to path: String)
+  /// Binds `entity` to `path`. `lookupKey` is required, not optional: a binding
+  /// without one is invisible to the runtime read path, which fails silently.
+  public func bind(_ entity: LatticeEntity, to path: String, lookupKey: Int)
   {
-    pathToEntity[path] = entity
-    entityToPath[entity] = path
+    assert(framePhase.current == .mutable,
+           "LatticePathTable.bind during the read phase - Hydra may be reading concurrently.")
+
+    byPath[path] = entity
+    byEntity[entity] = (path: path, lookupKey: lookupKey)
+    byLookupKey[lookupKey] = entity
   }
 
-  @discardableResult
-  public func unbind(_ entity: LatticeEntity) -> String?
+  /// Removes every index entry for `entity`. Deliberately takes no key - it
+  /// recovers the one actually used at bind time, so it cannot be unbound with
+  /// the wrong key and leave a stale entry behind.
+  public func unbind(_ entity: LatticeEntity)
   {
-    guard let path = entityToPath.removeValue(forKey: entity) else { return nil }
-    pathToEntity.removeValue(forKey: path)
-    return path
+    assert(framePhase.current == .mutable,
+           "LatticePathTable.unbind during the read phase - Hydra may be reading concurrently.")
+
+    guard let (path, lookupKey) = byEntity.removeValue(forKey: entity) else { return }
+    byPath[path] = nil
+    byLookupKey[lookupKey] = nil
   }
 
   /// The number of bound path<->entity pairs.
   public var count: Int
   {
-    entityToPath.count
+    byEntity.count
   }
 
-  /// Visits every bound `(entity, path)` pair. Iteration order is
-  /// unspecified. This is what lets a population pass walk the entities it
-  /// previously bound from a stage and pull each one's attribute values -
-  /// without the store or the sync layer holding a second copy of the path
-  /// list.
+  /// Visits every bound `(entity, path)` pair. Iteration order is unspecified.
   public func forEachBinding(_ body: (LatticeEntity, String) -> Void)
   {
-    for (entity, path) in entityToPath
+    for (entity, binding) in byEntity
     {
-      body(entity, path)
+      body(entity, binding.path)
     }
   }
 }

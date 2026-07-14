@@ -52,6 +52,13 @@ public final class USDStageSource: USDStageSourceRepresentable
     self.init(stage: Usd.Stage.open(filePath))
   }
 
+  /// A stable key for `path`, agreeing with the key the runtime read path uses.
+  /// For an OpenUSD binding: `SdfPath(path).GetHash()`.
+  public func lookupKey(for path: String) -> Int
+  {
+    SdfPath(path).GetHash()
+  }
+  
   /// Every active, defined, non-abstract prim path on the composed stage, in
   /// depth-first traversal order - the same order `Usd.Stage.traverse()`
   /// yields.

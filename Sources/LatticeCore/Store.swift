@@ -72,15 +72,32 @@ public final class LatticeStore
   /// works with no extra book keeping; call ``advanceChangeTick()`` directly
   /// if you want finer, per-system boundaries within a frame.
   public private(set) var currentTick: UInt64 = 1
-
-  public init()
+  
+  /// The frame phase this store's data is guarded by. Everything that reads or
+  /// mutates this store - the path table, the Hydra bridge, the population sync -
+  /// must assert against *this* instance, not one of their own.
+  public let framePhase: LatticeFramePhase
+  
+  public init(framePhase: LatticeFramePhase = LatticeFramePhase())
   {
+    self.framePhase = framePhase
     // Every entity starts in the archetype with no components at all.
     _ = archetypeIndex(for: [])
   }
 
+  /// Traps in debug if a structural or value mutation happens while Hydra may be
+  /// pulling concurrently. Compiled out in release.
+  @inline(__always)
+  private func assertMutable(_ what: @autoclosure () -> String)
+  {
+    assert(framePhase.current == .mutable,
+           "LatticeStore.\(what()) during the read phase - Hydra may be reading concurrently.")
+  }
+  
   public func advanceFrame()
   {
+    assertMutable("advanceFrame()")
+    
     frame &+= 1
     advanceChangeTick()
   }
@@ -89,6 +106,8 @@ public final class LatticeStore
   /// tick, so a reader that recorded the old tick sees them as changed.
   public func advanceChangeTick()
   {
+    assertMutable("advanceChangeTick()")
+    
     currentTick &+= 1
   }
 
@@ -114,6 +133,8 @@ public final class LatticeStore
     columnFactory: (() -> any ColumnStorage)? = nil
   )
   {
+    assertMutable("register(_:)")
+    
     let typeID = ObjectIdentifier(type)
     let factory: () -> any ColumnStorage = columnFactory ?? columnFactories[typeID] ?? { TypedColumn<T>() }
     columnFactories[typeID] = factory
@@ -146,6 +167,8 @@ public final class LatticeStore
 
   public func spawn() -> LatticeEntity
   {
+    assertMutable("spawn()")
+    
     let emptyArchetype = archetypeIndex(for: [])
     let entity = allocateEntity()
     let row = archetypes[emptyArchetype].appendEntityRow(entity)
@@ -165,6 +188,8 @@ public final class LatticeStore
   @discardableResult
   public func spawn<A: LatticeComponent>(_ a: A) -> LatticeEntity
   {
+    assertMutable("spawn(_:)")
+    
     ensureRegistered(A.self)
     let signature: Set<ComponentTypeID> = [ObjectIdentifier(A.self)]
     let archetypeIdx = archetypeIndex(for: signature)
@@ -181,6 +206,8 @@ public final class LatticeStore
   @discardableResult
   public func spawn<A: LatticeComponent, B: LatticeComponent>(_ a: A, _ b: B) -> LatticeEntity
   {
+    assertMutable("spawn(_:_:)")
+    
     ensureRegistered(A.self)
     ensureRegistered(B.self)
     let signature: Set<ComponentTypeID> = [ObjectIdentifier(A.self), ObjectIdentifier(B.self)]
@@ -222,6 +249,8 @@ public final class LatticeStore
 
   public func despawn(_ entity: LatticeEntity)
   {
+    assertMutable("despawn(_:)")
+    
     guard isAlive(entity), let location = locations[entity.index] else { return }
     if let moved = archetypes[location.archetypeIndex].removeRow(location.row)
     {
@@ -263,6 +292,8 @@ public final class LatticeStore
   /// into the archetype for its old signature plus `T`.
   public func set<T: LatticeComponent>(_ component: T, on entity: LatticeEntity)
   {
+    assertMutable("set(_:on:)")
+    
     ensureRegistered(T.self)
     setValue(component, typeID: ObjectIdentifier(T.self), on: entity)
   }
@@ -309,6 +340,8 @@ public final class LatticeStore
   /// under the same `key` must share the element type `T`.
   public func setDynamic<T: LatticeComponent>(_ value: T, forKey key: String, on entity: LatticeEntity)
   {
+    assertMutable("setDynamic(_:forKey:on:)")
+    
     let typeID = dynamicTypeID(for: key)
     ensureRegisteredDynamic(T.self, typeID: typeID)
     setValue(value, typeID: typeID, on: entity)
@@ -360,6 +393,8 @@ public final class LatticeStore
   /// one.
   public func remove(_ type: (some LatticeComponent).Type, from entity: LatticeEntity)
   {
+    assertMutable("remove(_:from:)")
+    
     guard isAlive(entity), let location = locations[entity.index] else { return }
     let currentArchetype = archetypes[location.archetypeIndex]
     let typeID = ObjectIdentifier(type)

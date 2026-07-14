@@ -39,6 +39,10 @@ public protocol USDStageSourceRepresentable
   /// Read-only sources can leave this at the default (a no-op returning
   /// `false`); only sources meant to author back into USD implement it.
   func setAttributeValue(_ value: LatticeUSDValue, at path: String, attribute name: String) -> Bool
+  
+  /// A stable key for `path`, agreeing with the key the runtime read path uses.
+  /// For an OpenUSD binding: `SdfPath(path).GetHash()`.
+  func lookupKey(for path: String) -> Int
 }
 
 public extension USDStageSourceRepresentable

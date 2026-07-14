@@ -457,7 +457,7 @@ func isPrefetchedAttribute(_ name: String) -> Bool
 @discardableResult
 func prefetchWorkingSet(into store: LatticeStore, source: USDStageSource) -> USDPopulationSync.PrefetchStats
 {
-  let paths = LatticePathTable()
+  let paths = LatticePathTable(framePhase: store.framePhase)
   let sync = USDPopulationSync(store: store, paths: paths, source: source)
   return sync.prefetch(where: isPrefetchedAttribute)
 }
@@ -500,7 +500,7 @@ func makeUSDStage(primCount: Int) -> UsdStage
 @discardableResult
 func populateFromUSD(into store: LatticeStore, source: USDStageSource) -> LatticePathTable
 {
-  let paths = LatticePathTable()
+  let paths = LatticePathTable(framePhase: store.framePhase)
   let sync = USDPopulationSync(store: store, paths: paths, source: source)
   sync.syncAll()
   sync.populate(Transform.self, from: "xformOp:translate")

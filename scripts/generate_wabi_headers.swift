@@ -37,7 +37,7 @@ func run(_ args: [String]) throws
   }
 }
 
-print("Preparing include/lattice/ subdirectories...")
+print("Preparing include/wabi/ subdirectories...")
 for (_, module, _) in modules
 {
   try fm.createDirectory(atPath: "\(includeRoot)/\(module)", withIntermediateDirectories: true)

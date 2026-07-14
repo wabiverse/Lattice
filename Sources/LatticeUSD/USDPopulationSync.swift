@@ -11,6 +11,7 @@
  * ---------------------------------------------------------------- */
 
 import LatticeCore
+import OpenUSDKit
 
 /// Populates a ``LatticeStore`` from a ``USDStageSourceRepresentable``,
 /// the way USDRT populates Fabric on first touch rather than mirroring the whole stage
@@ -31,6 +32,8 @@ public final class USDPopulationSync
   /// The prim-path set observed at the last ``syncIncremental()``, so the next
   /// call can diff against it instead of re-walking from scratch.
   private var lastSeenPaths: Set<String> = []
+  
+  private var framePhase: LatticeFramePhase
 
   /// A summary of what an incremental sync changed, handy for logging or for
   /// deciding whether any downstream work is needed this frame.
@@ -55,6 +58,7 @@ public final class USDPopulationSync
     self.store = store
     self.paths = paths
     self.source = source
+    self.framePhase = store.framePhase
   }
 
   /// Ensures every prim path on the stage has a corresponding
@@ -72,7 +76,7 @@ public final class USDPopulationSync
     for path in current where paths.entity(for: path) == nil
     {
       let entity = store.spawn()
-      paths.bind(entity, to: path)
+      paths.bind(entity, to: path, lookupKey: source.lookupKey(for: path))
     }
     lastSeenPaths = Set(current)
   }
@@ -98,7 +102,7 @@ public final class USDPopulationSync
       // Guard against a path that's already bound (e.g. after a prior syncAll).
       guard paths.entity(for: path) == nil else { continue }
       let entity = store.spawn()
-      paths.bind(entity, to: path)
+      paths.bind(entity, to: path, lookupKey: source.lookupKey(for: path))
       added += 1
     }
 
@@ -186,6 +190,7 @@ public final class USDPopulationSync
       // The prim's entity is created lazily, only once a requested attribute
       // actually resolves to a value - so a prim advertising a name but with no
       // authored/fallback value still doesn't enter the store.
+      let fastKey = source.lookupKey(for: path)
       var entity: LatticeEntity? = paths.entity(for: path)
       for name in requested
       {
@@ -206,7 +211,7 @@ public final class USDPopulationSync
         else
         {
           bound = store.spawn()
-          paths.bind(bound, to: path)
+          paths.bind(bound, to: path, lookupKey: fastKey)
           entity = bound
         }
 
@@ -292,6 +297,12 @@ public final class USDPopulationSync
     encode: (T) -> LatticeUSDValue?
   ) -> Int
   {
+    // Authors onto the UsdStage, which UsdImagingStageSceneIndex reads during
+    // GetPrim() - upstream of anything Lattice owns. Racing it corrupts the
+    // stage, not just the store, so this must not run while Hydra is pulling.
+    assert(framePhase.current == .mutable,
+           "writeBackChanged during the read phase - Hydra may be reading the stage concurrently.")
+    
     var written = 0
     store.query(T.self).forEachChanged(since: tick)
     { entity, value in
