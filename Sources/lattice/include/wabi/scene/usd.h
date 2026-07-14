@@ -4394,6 +4394,7 @@ struct LatticeUSD_USDPopulationSyncNested_PrefetchStats {
   _Alignas(8) char _storage[24];
 };
 
+SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(Pixar::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_passStub_LatticeUSD_uint64_t_0_8_void_ptr_8_16 {
   uint64_t _1;
@@ -4408,7 +4409,6 @@ static SWIFT_C_INLINE_THUNK struct swift_interop_passStub_LatticeUSD_uint64_t_0_
 }
 
 SWIFT_EXTERN ptrdiff_t $s10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF(struct swift_interop_passStub_LatticeUSD_uint64_t_0_8_void_ptr_8_16 path, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // lookupKey(for:)
-SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(Pixar::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_returnStub_LatticeUSD_void_ptr_0_8 {
   void * _Nullable _1;
@@ -5775,10 +5775,12 @@ class SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC") USDStageSource final : pub
 public:
   using RefCountedClass::RefCountedClass;
   using RefCountedClass::operator=;
-  SWIFT_INLINE_THUNK swift::Int lookupKey(const swift::String& path) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF");
 /// Wraps an already-opened stage. Use this when the caller owns stage
 /// lifetime (e.g. it also drives editing or rendering from the same stage).
   static SWIFT_INLINE_THUNK USDStageSource init(Pixar::UsdStage *_Nonnull stage) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfc");
+/// A stable key for <code>path</code>, agreeing with the key the runtime read path uses.
+/// For an OpenUSD binding: <code>SdfPath(path).GetHash()</code>.
+  SWIFT_INLINE_THUNK swift::Int lookupKey(const swift::String& path) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF");
 /// Every active, defined, non-abstract prim path on the composed stage, in
 /// depth-first traversal order - the same order <code>Usd.Stage.traverse()</code>
 /// yields.
@@ -6265,11 +6267,11 @@ return result;
     LatticeUSD::_impl::swift_interop_returnDirect_LatticeUSD_uint64_t_0_8_uint64_t_8_16_uint64_t_16_24(result, LatticeUSD::_impl::$s10LatticeUSD17USDPopulationSyncC13PrefetchStatsV8mirrored12uniqueArrays06sharedI0AESi_S2itcfC(mirrored, uniqueArrays, sharedArrays));
   });
   }
-  SWIFT_INLINE_THUNK swift::Int USDStageSource::lookupKey(const swift::String& path) {
-  return LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF(LatticeUSD::_impl::swift_interop_passDirect_LatticeUSD_uint64_t_0_8_void_ptr_8_16(swift::_impl::_impl_String::getOpaquePointer(path)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
-  }
   SWIFT_INLINE_THUNK USDStageSource USDStageSource::init(Pixar::UsdStage *_Nonnull stage) {
   return _impl::_impl_USDStageSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(stage, swift::TypeMetadataTrait<USDStageSource>::getTypeMetadata()));
+  }
+  SWIFT_INLINE_THUNK swift::Int USDStageSource::lookupKey(const swift::String& path) {
+  return LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF(LatticeUSD::_impl::swift_interop_passDirect_LatticeUSD_uint64_t_0_8_void_ptr_8_16(swift::_impl::_impl_String::getOpaquePointer(path)), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
   SWIFT_INLINE_THUNK swift::Array<swift::String> USDStageSource::primPaths() {
   return swift::_impl::_impl_Array<swift::String>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
