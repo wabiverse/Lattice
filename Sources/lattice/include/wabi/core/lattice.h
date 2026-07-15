@@ -5292,6 +5292,8 @@ class ColumnStorage { } SWIFT_UNAVAILABLE_MSG("protocol 'ColumnStorage' can not 
 
 // Unavailable in C++: Swift type alias 'ComponentTypeID'.
 
+class Lattice { } SWIFT_UNAVAILABLE_MSG("'Lattice' is a zero sized value type, it cannot be exposed to C++ yet");
+
 template<class T_0_0>
 #ifdef __cpp_concepts
 requires swift::isUsableInGenericContext<T_0_0>
