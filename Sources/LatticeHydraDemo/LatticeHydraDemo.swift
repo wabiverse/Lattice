@@ -16,56 +16,50 @@ import HydraKit
 import LatticeCore
 import LatticeUSD
 import SwiftCrossUI
+import OCIOBundle
+import OpenColorIO
+
+public typealias OCIO = OpenColorIO_v2_3
 
 @main
 struct LatticeHydraDemo: App
 {
   typealias Backend = PlatformBackend
   
-  let stage: UsdStage
-  let engine: Hydra.RenderEngine
+  let scenePath: String? = AppUtils.usdScenePathFromArguments()
 
-  let source: USDStageSource
-
+  @State private var hydra = HydraStage()
+  
   init()
   {
-    Pixar.Bundler.shared.setup(.resources)
-    
-    // opens the stage specified by '--usd /path/to/stage.usda'
-    // otherwise, falls back to a default '/hello/world' stage.
-    if let scenePath = AppUtils.usdScenePathFromArguments()
-    {
-      stage = UsdStage.open(scenePath)
+    OCIOBundler.override.ocioInit(config: .aces)
+    if let ocio: OCIO.ConstConfigRcPtr = OCIOBundler.override.config {
+      let config = Overlay.GetOCIOConfigSummary(ocio)
+      print(config)
     }
-    else
-    {
-      stage = UsdStage.createInMemory()
-      
-      // Hydra.Viewport does not yet have a default light, or
-      // any option to add one yet - and without a light, you
-      // wont be able to see anything except a pure black image.
-      let domeLight = UsdLux.DomeLight.define(stage, path: "/hello/defaultDomeLight")
-      if let hdxResources = Bundle.hdx?.resourcePath {
-        let tex = "\(hdxResources)/textures/StinsonBeach.hdr"
-        if FileManager.default.fileExists(atPath: tex) {
-          let hdrAsset = Sdf.AssetPath(tex)
-          domeLight.createTextureFileAttr().set(hdrAsset)
+  }
+  
+  var body: some Scene {
+    WindowGroup("Lattice Hydra Demo") {
+      VStack {
+        if let engine = hydra.engine {
+          Hydra.Viewport(engine: engine)
+        } else {
+          Text("Loading Stage...")
         }
       }
-      
-      UsdGeom.Xform.define(stage, path: "/hello")
-      UsdGeom.Sphere.define(stage, path: "/hello/world")
+      .task {
+        hydra.loadStage(scenePath)
+      }
     }
-
-    source = USDStageSource(stage: stage)
-    engine = Hydra.RenderEngine(stage: stage)
   }
+}
 
-  var body: some Scene
-  {
-    WindowGroup("Lattice Hydra Demo")
-    {
-      Hydra.Viewport(engine: engine)
-    }
+public extension OCIOBundler {
+  @MainActor
+  static var override: OCIOBundler {
+    // hack, since OCIOBundler is not updated for swift 6 strict concurrency.
+    nonisolated(unsafe) let instance = OCIOBundler.self[keyPath: \.shared]
+    return instance
   }
 }

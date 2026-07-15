@@ -20,7 +20,7 @@ let package = Package(
     .executable(name: "LatticeHydraDemo", targets: ["LatticeHydraDemo"])
   ],
   dependencies: [
-    .package(url: "https://github.com/wabiverse/swift-usd.git", from: "26.5.2"),
+    .package(url: "https://github.com/wabiverse/swift-usd.git", branch: "dev"),
     .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.5.0"),
   ],
   targets: [
