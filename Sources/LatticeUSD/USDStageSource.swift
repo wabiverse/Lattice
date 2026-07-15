@@ -12,6 +12,7 @@
 
 import CxxStdlib
 import LatticeCore
+import LatticeOverlays
 import OpenUSDKit
 
 /// A single mirrored USD value is a Lattice component in its own right, so it
