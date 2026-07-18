@@ -100,7 +100,8 @@ let package = Package(
         .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeCore"),
         .target(name: "LatticeMetal"),
-        .target(name: "LatticeUSD")
+        .target(name: "LatticeUSD"),
+        .target(name: "lattice")
       ],
       cxxSettings: [
         .define("_LIBCPP_ABI_NO_COMPRESSED_PAIR_PADDING")

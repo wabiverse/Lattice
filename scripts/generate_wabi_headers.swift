@@ -45,8 +45,9 @@ for (_, module, _) in modules
 
 try fm.createDirectory(atPath: "\(includeRoot)/imaging", withIntermediateDirectories: true)
 
-print("Priming a full release build so dependencies are cached...")
-try run(["swift", "build", "-c", "release"])
+// comment this back in if headers are being generated for the wrong swift target...
+// print("Priming a full release build so dependencies are cached...")
+// try run(["swift", "build", "-c", "release"])
 
 for (target, module, header) in modules
 {

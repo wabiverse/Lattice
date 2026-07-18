@@ -1,0 +1,12 @@
+// Only the C bridge is part of the Swift-importable module.
+//
+// The rest of this include tree (wabi/wabi.h, wabi/imaging/hydra/sceneIndex.h,
+// and the generated wabi/{core,gpu,scene}/*.h) is C++ that pulls in the generated
+// C++ view of LatticeCore/LatticeMetal/LatticeUSD. A Swift target importing those
+// would be re-importing the C++ projection of Swift modules it already imports
+// natively, which conflicts. They stay reachable as ordinary textual includes for
+// this target's own .cpp files and for C++ consumers.
+module lattice {
+  header "wabi/imaging/hydra/latticeBridge.h"
+  export *
+}

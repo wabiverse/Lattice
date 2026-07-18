@@ -1,5 +1,15 @@
 # Lattice
 
+![Lattice driving 100,000 live transforms through a Hydra viewport](assets/preview.png)
+
+<p align="center">
+  <sub>
+    100,000 cubes moving at 60 fps. A Metal kernel writes every transform, a
+    Hydra scene index reads them straight out of the store, and the <code>UsdStage</code>
+    is never touched. Lattice's share of the 16.64 ms frame is 0.53 ms.
+  </sub>
+</p>
+
 A Swift-native, open-source runtime data store for real-time scenes -
 the same problem [NVIDIA's Fabric/USDRT](https://docs.omniverse.nvidia.com/kit/docs/usdrt.scenegraph/latest/usd_fabric_usdrt.html)
 solve inside Omniverse, built as its own thing rather than a port of that API.
@@ -31,7 +41,7 @@ unified memory, and Swift's own concurrency for parallel iteration.
 
 ## Package layout
 
-- **`Lattice`** - the core. Entities, archetypes, columns, queries, change
+- **`LatticeCore`** - the core. Entities, archetypes, columns, queries, change
   tracking. No platform-specific or USD-specific code lives here; it builds
   and tests anywhere Swift runs.
 - **`LatticeMetal`** - `MetalBackedColumn<T>`, a column backed by an
@@ -41,11 +51,20 @@ unified memory, and Swift's own concurrency for parallel iteration.
   `store.register(Particle.self) { MetalBackedColumn<Particle>(device: device) }`.
 - **`LatticeUSD`** - a thin adapter (`USDStageSourceRepresentable`) that lets any
   USD binding populate a `LatticeStore`, without Lattice depending on that
-  binding's concrete API.
+  binding's concrete API. It also holds the two objects the Hydra scene indices
+  read live transforms out of: `LatticeXformSource` for per-prim transforms and
+  `LatticeInstanceSource` for instance arrays.
+- **`LatticeOverlays`** - small C++ helpers for the bits of OpenUSD that Swift
+  can't reach directly yet, mainly zero-copy `VtArray` access.
+- **`lattice`** - the C++ side of the Hydra integration: the two scene indices,
+  and the small C bridge that registers them with Hydra. See [Live in Hydra](#live-in-hydra).
 - **`LatticeDemo`** - `swift run -c release LatticeDemo`: spawns 100k entities
   with a `Transform`/`Velocity` pair and integrates them for 120 frames across
   the serial, parallel, and Metal GPU paths, then repeats the whole run over a
   store populated from a real `UsdStage`. See [Benchmarks](#benchmarks).
+- **`LatticeHydraDemo`** - `swift run -c release LatticeHydraDemo`: the same
+  store, this time driving a live Hydra viewport with 100k moving cubes. See
+  [Live in Hydra](#live-in-hydra).
 
 ## Benchmarks
 
@@ -74,6 +93,89 @@ population costing ~1.1 s.
 > unified memory achieves GPU-throughput territory on the exact same
 > per-frame simulation patterns Fabric targets - entirely bypassing the
 > need for a separate upload step, CUDA, or the Kit runtime.
+
+## Live in Hydra
+
+`LatticeHydraDemo` runs the store behind a live Hydra viewport.
+
+The cubes are written into a `UsdStage` once, at startup, and after that the
+stage is never touched again. Every frame a Metal kernel rewrites all 100,000
+transforms in a `MetalBackedColumn`, and a scene index hands those to Hydra
+when it asks for a prim - so Hydra reads the store, not the stage.
+
+The stage still holds the scene as authored, and the motion lives somewhere
+that can keep up with a frame. That's the same division Fabric uses inside
+Omniverse, done here as a Hydra scene index.
+
+### The scene shape decides the frame time, not the store
+
+The demo can run the same store and the same kernel two ways. The only thing
+that changes is how many prims Hydra has to be told about, and that turns out
+to be what decides the frame time. Release build, same base **2026 Apple
+MacBook Air M5** (10-core, unified memory) as the benchmarks above, 100k cubes,
+`Ripple` kernel, Storm:
+
+| 100k cubes | xform compute | dirty + notify | frame |
+| :--- | ---: | ---: | ---: |
+| `--per-prim` - one `Cube` prim each | 0.35 ms | 56.23 ms | 1033 ms |
+| instancer - one `UsdGeomPointInstancer` | 0.43 ms | **0.07 ms** | **26 ms** |
+
+With one prim per cube, Hydra re-syncs 100,000 prims every frame, and we have
+to hand it 100,000 dirty paths to make that happen. The instancer replaces
+three arrays on a single prim instead, so there's one dirty path no matter how
+many cubes there are. That's roughly 800× less time spent notifying and 40×
+less per frame, with the store doing exactly the same work either way.
+
+Lattice costs under half a millisecond in both. Everything else in the frame
+dwarfs it.
+
+> [!NOTE]
+> These are read off the demo's HUD, not a proper benchmark harness, and
+> `frame` includes Storm drawing and presenting. The gap between the two rows
+> is the part that carries over to other machines - it comes from prim counts,
+> not from this laptop.
+
+### The frame contract
+
+Hydra calls `GetPrim()` from several threads at once, so writing to the store
+while it reads would corrupt it. The frame is split into two phases, and
+`LatticeFramePhase` asserts on the split in debug builds:
+
+```
+mutate -> advanceChangeTick() -> sceneIndex.Tick() -> beginReadPhase()
+       -> Hydra pulls GetPrim() -> endReadPhase()
+```
+
+`Hydra.FrameDelegate` provides those two hooks. By the time the read phase
+opens, everything Hydra is about to ask for has been written and marked dirty.
+
+### Motion fields, switchable live
+
+Five kernels. Each one works out where a cube should be from its home position
+and the clock, and nothing else - nothing carried over from last frame, nothing
+shared between cubes. That's what makes them easy to run in parallel, and it's
+also why you can switch between them while it's running with nothing to reset.
+They're all compiled at startup, so switching is instant:
+
+| Kernel | Motion | Per-instance cost |
+| :--- | :--- | :--- |
+| Ripple | spherical wave from the centre | ~20 flops |
+| Galaxy | differential rotation winds a grid into spiral arms | ~40 flops |
+| Curl Noise | divergence-free curl of an fbm vector potential | 18 fbm, 3 octaves |
+| Lorenz | the attractor, re-integrated from home every frame | 128 Euler steps |
+| Mandelbulb | distance estimation with an animated exponent | 16 iters, `pow`/`acos`/`atan2` |
+
+Clicking down that list is the fun part. `xform compute` goes up roughly
+tenfold from top to bottom, and the frame time barely moves.
+
+```pwsh
+export SWIFTUSD_BUILD_FROM_SOURCE=1
+
+swift run -c release LatticeHydraDemo                 # instancer + GPU, 100k
+swift run -c release LatticeHydraDemo --count 250000  # more
+swift run -c release LatticeHydraDemo --per-prim      # the per-prim comparison
+swift run -c release LatticeHydraDemo --cpu           # parallel-CPU path (ripple only)
+```
 
 ## Core concepts
 
@@ -180,6 +282,11 @@ scheduler.run(on: store)   // integrate and regen touch different types -> one c
   change ticks). That's USDRT's population-vs-synchronization split plus the
   return path. `USDStageSource` is a concrete `USDStageSourceRepresentable`
   backed by a real `UsdStage` via `wabiverse/swift-usd`.
+- **A live Hydra path.** Two scene indices - `LatticeHydraSceneIndex` for
+  per-prim transforms, `LatticeInstancerSceneIndex` for instance arrays - feed
+  Hydra from the store without touching the stage. The read/write phase split
+  is asserted in debug builds, not just written down.
+  See [Live in Hydra](#live-in-hydra).
 
 ## Roadmap
 
@@ -196,6 +303,9 @@ What's genuinely still ahead, in rough priority:
   the store->stage loop by change tick; wiring it to `ExecUsdSystem`'s
   invalidation graph would let recompute *and* write-back share the one signal
   that already knows what's dirty.
+- **Zero-copy arrays across the scene index boundary.** `VtArray`'s foreign data
+  source hook could be utilized to reference the `MTLBuffer` directly, making the
+  whole path allocation-free.
 
 ## Integrating with `wabiverse/swift-usd`
 

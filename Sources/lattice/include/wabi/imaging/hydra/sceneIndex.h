@@ -34,7 +34,7 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-TF_DECLARE_REF_PTRS(LatticeHydraSceneIndex);
+TF_DECLARE_WEAK_AND_REF_PTRS(LatticeHydraSceneIndex);
 
 class LatticeHydraSceneIndex : public HdSingleInputFilteringSceneIndexBase {
  public:

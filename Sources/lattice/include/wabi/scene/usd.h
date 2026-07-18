@@ -4112,6 +4112,32 @@ namespace _impl {
 extern "C" {
 #endif
 
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2txSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2txSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2tySfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2tySfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2tzSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2tzSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2sxSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2sxSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2sySfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2sySfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2szSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2szSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2rxSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2rxSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2rySfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2rySfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2rzSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2rzSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD13InstanceXformV2rwSfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2rwSfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV2tx2ty2tz2sx2sy2sz2rx2ry2rz2rwACSf_S9ftcfC(SWIFT_INDIRECT_RESULT void * _Nonnull, float tx, float ty, float tz, float sx, float sy, float sz, float rx, float ry, float rz, float rw) SWIFT_NOEXCEPT SWIFT_CALL; // init(tx:ty:tz:sx:sy:sz:rx:ry:rz:rw:)
+SWIFT_EXTERN void $s10LatticeUSD13InstanceXformV8identityACvgZ(SWIFT_INDIRECT_RESULT void * _Nonnull) SWIFT_NOEXCEPT SWIFT_CALL; // _
+struct LatticeUSD_InstanceXform {
+  _Alignas(4) char _storage[40];
+};
+
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_passStub_LatticeUSD_double_0_8_double_8_16_double_16_24 {
   double _1;
@@ -4312,6 +4338,55 @@ struct LatticeUSD_LatticeFloat4 {
   _Alignas(4) char _storage[16];
 };
 
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m00Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m00Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m01Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m01Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m02Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m02Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m03Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m03Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m10Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m10Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m11Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m11Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m12Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m12Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m13Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m13Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m20Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m20Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m21Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m21Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m22Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m22Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m23Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m23Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m30Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m30Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m31Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m31Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m32Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m32Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN float $s10LatticeUSD0A8Float4x4V3m33Sfvg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V3m33Sfvs(float value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4VyACSf_S15ftcfC(SWIFT_INDIRECT_RESULT void * _Nonnull, float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) SWIFT_NOEXCEPT SWIFT_CALL; // init(_:_:_:_:_:_:_:_:_:_:_:_:_:_:_:_:)
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V8identityACvgZ(SWIFT_INDIRECT_RESULT void * _Nonnull) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvg(SWIFT_INDIRECT_RESULT void * _Nonnull, SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN ptrdiff_t $s10LatticeUSD0A8Float4x4V9hashValueSivg(SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+struct LatticeUSD_LatticeFloat4x4 {
+  _Alignas(4) char _storage[64];
+};
+
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvg(SWIFT_INDIRECT_RESULT void * _Nonnull, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void * _Nonnull $s10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0VtcfC(void * _Nonnull store, const void * _Nonnull instancerPath, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(store:instancerPath:)
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC4bind4base5countySVSg_SitF(void const * _Nullable base, ptrdiff_t count, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // bind(base:count:)
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC14beginReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // beginReadPhase()
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC12endReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // endReadPhase()
+SWIFT_EXTERN void const * _Nullable $s10LatticeUSD0A14InstanceSourceC12instanceBaseSVSgyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // instanceBase()
+SWIFT_EXTERN ptrdiff_t $s10LatticeUSD0A14InstanceSourceC13instanceCountSiyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // instanceCount()
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC9markDirtyyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // markDirty()
+SWIFT_EXTERN bool $s10LatticeUSD0A14InstanceSourceC10drainDirtySbyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // drainDirty()
 SWIFT_EXTERN void * _Nonnull $s10LatticeUSD0A11XformSourceC5store5pathsAC0A4Core0A5StoreC_AF0A9PathTableCtcfC(void * _Nonnull store, void * _Nonnull paths, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(store:paths:)
 SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC14beginReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // beginReadPhase()
 SWIFT_EXTERN void $s10LatticeUSD0A11XformSourceC12endReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // endReadPhase()
@@ -4427,6 +4502,13 @@ struct LatticeUSD_Xform {
   _Alignas(8) char _storage[128];
 };
 
+SWIFT_EXTERN void $s10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvg(SWIFT_INDIRECT_RESULT void * _Nonnull, SWIFT_CONTEXT const void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvs(const void * _Nonnull value, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // _
+SWIFT_EXTERN void $s10LatticeUSD8XformGPUV6matrixAcA0A8Float4x4V_tcfC(SWIFT_INDIRECT_RESULT void * _Nonnull, const void * _Nonnull matrix) SWIFT_NOEXCEPT SWIFT_CALL; // init(matrix:)
+struct LatticeUSD_XformGPU {
+  _Alignas(4) char _storage[64];
+};
+
 
 #ifdef __cplusplus
 }
@@ -4434,6 +4516,149 @@ struct LatticeUSD_Xform {
 }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-identifier"
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+
+class SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV") InstanceXform;
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeUSD::InstanceXform> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+namespace _impl {
+
+class _impl_InstanceXform;
+
+// Type metadata accessor for InstanceXform
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s10LatticeUSD13InstanceXformVMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV") InstanceXform final {
+public:
+  SWIFT_INLINE_THUNK ~InstanceXform() noexcept {
+    auto metadata = _impl::$s10LatticeUSD13InstanceXformVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->destroy(_getOpaquePointer(), metadata._0);
+  }
+  SWIFT_INLINE_THUNK InstanceXform(const InstanceXform &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD13InstanceXformVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  }
+  SWIFT_INLINE_THUNK InstanceXform &operator =(const InstanceXform &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD13InstanceXformVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->assignWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  return *this;
+  }
+  SWIFT_INLINE_THUNK float getTx() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2txSfvp");
+  SWIFT_INLINE_THUNK void setTx(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2txSfvp");
+  SWIFT_INLINE_THUNK float getTy() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2tySfvp");
+  SWIFT_INLINE_THUNK void setTy(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2tySfvp");
+  SWIFT_INLINE_THUNK float getTz() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2tzSfvp");
+  SWIFT_INLINE_THUNK void setTz(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2tzSfvp");
+  SWIFT_INLINE_THUNK float getSx() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2sxSfvp");
+  SWIFT_INLINE_THUNK void setSx(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2sxSfvp");
+  SWIFT_INLINE_THUNK float getSy() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2sySfvp");
+  SWIFT_INLINE_THUNK void setSy(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2sySfvp");
+  SWIFT_INLINE_THUNK float getSz() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2szSfvp");
+  SWIFT_INLINE_THUNK void setSz(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2szSfvp");
+  SWIFT_INLINE_THUNK float getRx() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rxSfvp");
+  SWIFT_INLINE_THUNK void setRx(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rxSfvp");
+  SWIFT_INLINE_THUNK float getRy() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rySfvp");
+  SWIFT_INLINE_THUNK void setRy(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rySfvp");
+  SWIFT_INLINE_THUNK float getRz() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rzSfvp");
+  SWIFT_INLINE_THUNK void setRz(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rzSfvp");
+  SWIFT_INLINE_THUNK float getRw() const SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rwSfvp");
+  SWIFT_INLINE_THUNK void setRw(float value) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2rwSfvp");
+  static SWIFT_INLINE_THUNK InstanceXform init(float tx, float ty, float tz, float sx, float sy, float sz, float rx, float ry, float rz, float rw) SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV2tx2ty2tz2sx2sy2sz2rx2ry2rz2rwACSf_S9ftcfc");
+  static SWIFT_INLINE_THUNK InstanceXform getIdentity() SWIFT_SYMBOL("s:10LatticeUSD13InstanceXformV8identityACvpZ");
+private:
+  SWIFT_INLINE_THUNK InstanceXform() noexcept {}
+  static SWIFT_INLINE_THUNK InstanceXform _make() noexcept { return InstanceXform(); }
+  SWIFT_INLINE_THUNK const char * _Nonnull _getOpaquePointer() const noexcept { return _storage; }
+  SWIFT_INLINE_THUNK char * _Nonnull _getOpaquePointer() noexcept { return _storage; }
+
+  alignas(4) char _storage[40];
+  friend class _impl::_impl_InstanceXform;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s10LatticeUSD13InstanceXformVD;
+  static inline constexpr $s10LatticeUSD13InstanceXformVD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_InstanceXform {
+public:
+  static SWIFT_INLINE_THUNK char * _Nonnull getOpaquePointer(InstanceXform &object) { return object._getOpaquePointer(); }
+  static SWIFT_INLINE_THUNK const char * _Nonnull getOpaquePointer(const InstanceXform &object) { return object._getOpaquePointer(); }
+  template<class T>
+  static SWIFT_INLINE_PRIVATE_HELPER InstanceXform returnNewValue(T callable) {
+    auto result = InstanceXform::_make();
+    callable(result._getOpaquePointer());
+    return result;
+  }
+  static SWIFT_INLINE_THUNK void initializeWithTake(char * _Nonnull destStorage, char * _Nonnull srcStorage) {
+    auto metadata = _impl::$s10LatticeUSD13InstanceXformVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithTake(destStorage, srcStorage, metadata._0);
+  }
+};
+
+} // namespace _impl
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeUSD::InstanceXform> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformVMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+inline const constexpr bool isValueType<LatticeUSD::InstanceXform> = true;
+template<>
+struct implClassFor<LatticeUSD::InstanceXform> { using type = LatticeUSD::_impl::_impl_InstanceXform; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
 
 class SWIFT_SYMBOL("s:10LatticeUSD0A7Double3V") LatticeDouble3;
@@ -5138,6 +5363,163 @@ struct implClassFor<LatticeUSD::LatticeFloat4> { using type = LatticeUSD::_impl:
 
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
 
+class SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V") LatticeFloat4x4;
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeUSD::LatticeFloat4x4> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+namespace _impl {
+
+class _impl_LatticeFloat4x4;
+
+// Type metadata accessor for LatticeFloat4x4
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s10LatticeUSD0A8Float4x4VMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V") LatticeFloat4x4 final {
+public:
+  SWIFT_INLINE_THUNK ~LatticeFloat4x4() noexcept {
+    auto metadata = _impl::$s10LatticeUSD0A8Float4x4VMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->destroy(_getOpaquePointer(), metadata._0);
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4(const LatticeFloat4x4 &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD0A8Float4x4VMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4 &operator =(const LatticeFloat4x4 &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD0A8Float4x4VMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->assignWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  return *this;
+  }
+  SWIFT_INLINE_THUNK float getM00() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m00Sfvp");
+  SWIFT_INLINE_THUNK void setM00(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m00Sfvp");
+  SWIFT_INLINE_THUNK float getM01() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m01Sfvp");
+  SWIFT_INLINE_THUNK void setM01(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m01Sfvp");
+  SWIFT_INLINE_THUNK float getM02() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m02Sfvp");
+  SWIFT_INLINE_THUNK void setM02(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m02Sfvp");
+  SWIFT_INLINE_THUNK float getM03() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m03Sfvp");
+  SWIFT_INLINE_THUNK void setM03(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m03Sfvp");
+  SWIFT_INLINE_THUNK float getM10() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m10Sfvp");
+  SWIFT_INLINE_THUNK void setM10(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m10Sfvp");
+  SWIFT_INLINE_THUNK float getM11() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m11Sfvp");
+  SWIFT_INLINE_THUNK void setM11(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m11Sfvp");
+  SWIFT_INLINE_THUNK float getM12() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m12Sfvp");
+  SWIFT_INLINE_THUNK void setM12(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m12Sfvp");
+  SWIFT_INLINE_THUNK float getM13() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m13Sfvp");
+  SWIFT_INLINE_THUNK void setM13(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m13Sfvp");
+  SWIFT_INLINE_THUNK float getM20() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m20Sfvp");
+  SWIFT_INLINE_THUNK void setM20(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m20Sfvp");
+  SWIFT_INLINE_THUNK float getM21() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m21Sfvp");
+  SWIFT_INLINE_THUNK void setM21(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m21Sfvp");
+  SWIFT_INLINE_THUNK float getM22() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m22Sfvp");
+  SWIFT_INLINE_THUNK void setM22(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m22Sfvp");
+  SWIFT_INLINE_THUNK float getM23() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m23Sfvp");
+  SWIFT_INLINE_THUNK void setM23(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m23Sfvp");
+  SWIFT_INLINE_THUNK float getM30() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m30Sfvp");
+  SWIFT_INLINE_THUNK void setM30(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m30Sfvp");
+  SWIFT_INLINE_THUNK float getM31() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m31Sfvp");
+  SWIFT_INLINE_THUNK void setM31(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m31Sfvp");
+  SWIFT_INLINE_THUNK float getM32() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m32Sfvp");
+  SWIFT_INLINE_THUNK void setM32(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m32Sfvp");
+  SWIFT_INLINE_THUNK float getM33() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m33Sfvp");
+  SWIFT_INLINE_THUNK void setM33(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m33Sfvp");
+  static SWIFT_INLINE_THUNK LatticeFloat4x4 init(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4VyACSf_S15ftcfc");
+  static SWIFT_INLINE_THUNK LatticeFloat4x4 getIdentity() SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V8identityACvpZ");
+  SWIFT_INLINE_THUNK Pixar::GfMatrix4d getAsGfMatrix4d() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvp");
+  SWIFT_INLINE_THUNK swift::Int getHashValue() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V9hashValueSivp");
+private:
+  SWIFT_INLINE_THUNK LatticeFloat4x4() noexcept {}
+  static SWIFT_INLINE_THUNK LatticeFloat4x4 _make() noexcept { return LatticeFloat4x4(); }
+  SWIFT_INLINE_THUNK const char * _Nonnull _getOpaquePointer() const noexcept { return _storage; }
+  SWIFT_INLINE_THUNK char * _Nonnull _getOpaquePointer() noexcept { return _storage; }
+
+  alignas(4) char _storage[64];
+  friend class _impl::_impl_LatticeFloat4x4;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s10LatticeUSD0A8Float4x4VD;
+  static inline constexpr $s10LatticeUSD0A8Float4x4VD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_LatticeFloat4x4 {
+public:
+  static SWIFT_INLINE_THUNK char * _Nonnull getOpaquePointer(LatticeFloat4x4 &object) { return object._getOpaquePointer(); }
+  static SWIFT_INLINE_THUNK const char * _Nonnull getOpaquePointer(const LatticeFloat4x4 &object) { return object._getOpaquePointer(); }
+  template<class T>
+  static SWIFT_INLINE_PRIVATE_HELPER LatticeFloat4x4 returnNewValue(T callable) {
+    auto result = LatticeFloat4x4::_make();
+    callable(result._getOpaquePointer());
+    return result;
+  }
+  static SWIFT_INLINE_THUNK void initializeWithTake(char * _Nonnull destStorage, char * _Nonnull srcStorage) {
+    auto metadata = _impl::$s10LatticeUSD0A8Float4x4VMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithTake(destStorage, srcStorage, metadata._0);
+  }
+};
+
+} // namespace _impl
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeUSD::LatticeFloat4x4> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4VMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+inline const constexpr bool isValueType<LatticeUSD::LatticeFloat4x4> = true;
+template<>
+struct implClassFor<LatticeUSD::LatticeFloat4x4> { using type = LatticeUSD::_impl::_impl_LatticeFloat4x4; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+
 namespace _impl {
 
 // Type metadata accessor for SdfPath
@@ -5167,6 +5549,106 @@ inline const constexpr bool isSwiftBridgedCxxRecord<Pixar::SdfPath> = true;
 } // namespace swift
 
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+class SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC") LatticeInstanceSource;
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeUSD::LatticeInstanceSource> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+/// The live, app-owned instance buffer that <code>LatticeInstancerSceneIndex</code>
+/// reads through when Hydra pulls the instancer prim.
+/// The per-prim <code>LatticeXformSource</code> answers one <code>GetPrim()</code> per cube, which
+/// means a scene of N moving cubes costs N scene-index answers and N dirtied
+/// prims every frame. This answers <em>one</em> prim holding all N instances, so the
+/// frame’s notification set is a single path no matter how large N gets. Same
+/// store, same kernel, same frame contract - a different shape of scene.
+/// The frame contract is unchanged:
+/// \code
+/// mutate -> store.advanceChangeTick() -> sceneIndex.Tick() -> beginReadPhase()
+///        -> Hydra pulls GetPrim() -> endReadPhase()
+///
+/// \endcode
+namespace _impl {
+
+class _impl_LatticeInstanceSource;
+// Type metadata accessor for LatticeInstanceSource
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s10LatticeUSD0A14InstanceSourceCMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC") LatticeInstanceSource final : public swift::_impl::RefCountedClass {
+public:
+  using RefCountedClass::RefCountedClass;
+  using RefCountedClass::operator=;
+  SWIFT_INLINE_THUNK Pixar::SdfPath getInstancerPath() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvp");
+  static SWIFT_INLINE_THUNK LatticeInstanceSource init(const LatticeCore::LatticeStore& store, const Pixar::SdfPath& instancerPath) SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0Vtcfc");
+/// Points the source at the column the kernel writes.
+/// Separate from <code>init</code> because the column only exists after the store is
+/// populated, and its <code>MTLBuffer</code> only after the Metal path is confirmed.
+  SWIFT_INLINE_THUNK void bind(void const * _Nullable base, swift::Int count) SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC4bind4base5countySVSg_SitF");
+  SWIFT_INLINE_THUNK void beginReadPhase() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC14beginReadPhaseyyF");
+  SWIFT_INLINE_THUNK void endReadPhase() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC12endReadPhaseyyF");
+/// Base address of the instance column, or <code>nil</code> if nothing is bound.
+/// Called from C++ <code>GetPrim()</code> once per frame - not once per instance - and
+/// the caller strides it as ten floats per instance.
+  SWIFT_INLINE_THUNK void const * _Nullable instanceBase() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC12instanceBaseSVSgyF");
+  SWIFT_INLINE_THUNK swift::Int instanceCount() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC13instanceCountSiyF");
+/// Flags the instancer as needing a <code>PrimsDirtied</code> this frame.
+/// A single bool, not a path set: there is only ever one prim to dirty, which
+/// is the entire point of this path.
+  SWIFT_INLINE_THUNK void markDirty() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC9markDirtyyyF");
+/// Drains the flag. Must run before <code>beginReadPhase()</code>.
+  SWIFT_INLINE_THUNK bool drainDirty() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC10drainDirtySbyF");
+protected:
+  SWIFT_INLINE_THUNK LatticeInstanceSource(void * _Nonnull ptr) noexcept : RefCountedClass(ptr) {}
+private:
+  friend class _impl::_impl_LatticeInstanceSource;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s10LatticeUSD0A14InstanceSourceCD;
+  static inline constexpr $s10LatticeUSD0A14InstanceSourceCD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_LatticeInstanceSource {
+public:
+static SWIFT_INLINE_THUNK LatticeInstanceSource makeRetained(void * _Nonnull ptr) noexcept { return LatticeInstanceSource(ptr); }
+};
+
+} // namespace _impl
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeUSD::LatticeInstanceSource> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceCMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+struct implClassFor<LatticeUSD::LatticeInstanceSource> { using type = LatticeUSD::_impl::_impl_LatticeInstanceSource; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+
 namespace _impl {
 
 // Type metadata accessor for SdfPathVector
@@ -5249,6 +5731,16 @@ public:
 /// form: <code>path.string</code> would heap-allocate a Swift <code>String</code> on every call,
 /// which at scene scale is the dominant per-frame cost. The hash agrees with the
 /// key <code>USDPopulationSync</code> bound with, courtesy of <code>SdfPath</code> interning.
+/// Reads the GPU column first, then the CPU one.
+/// A scene driven by a compute kernel carries only <code>XformGPU</code>, and this is
+/// the point where its single-precision matrix is widened to the
+/// double-precision <code>GfMatrix4d</code> USD wants. Doing it here rather than in a
+/// bulk pass is the whole reason the GPU path needs no CPU touch: Hydra pulls
+/// one prim at a time anyway, so the widening rides along with a read that
+/// was already happening, and prims Hydra never asks for are never converted.
+/// A CPU-driven scene pays one extra failed column lookup per prim for the
+/// <code>XformGPU</code> miss. That is the deliberate trade - the GPU path is the fast
+/// path, so it gets the single lookup.
   SWIFT_INLINE_THUNK swift::Optional<Pixar::GfMatrix4d> getLiveXform(const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF");
 /// A boolean-based alternative to <code>getLiveXform(_:)</code> to bypass a Swift -> C++
 /// interoperability linker bug.
@@ -5963,6 +6455,200 @@ struct implClassFor<LatticeUSD::Xform> { using type = LatticeUSD::_impl::_impl_X
 
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
 
+class SWIFT_SYMBOL("s:10LatticeUSD8XformGPUV") XformGPU;
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+inline const constexpr bool isUsableInGenericContext<LatticeUSD::XformGPU> = true;
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+namespace _impl {
+
+class _impl_XformGPU;
+
+// Type metadata accessor for XformGPU
+SWIFT_EXTERN swift::_impl::MetadataResponseTy $s10LatticeUSD8XformGPUVMa(swift::_impl::MetadataRequestTy) SWIFT_NOEXCEPT SWIFT_CALL;
+
+
+} // namespace _impl
+
+class SWIFT_SYMBOL("s:10LatticeUSD8XformGPUV") XformGPU final {
+public:
+  SWIFT_INLINE_THUNK ~XformGPU() noexcept {
+    auto metadata = _impl::$s10LatticeUSD8XformGPUVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->destroy(_getOpaquePointer(), metadata._0);
+  }
+  SWIFT_INLINE_THUNK XformGPU(const XformGPU &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD8XformGPUVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  }
+  SWIFT_INLINE_THUNK XformGPU &operator =(const XformGPU &other) noexcept {
+    auto metadata = _impl::$s10LatticeUSD8XformGPUVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->assignWithCopy(_getOpaquePointer(), const_cast<char *>(other._getOpaquePointer()), metadata._0);
+  return *this;
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4 getMatrix() const SWIFT_SYMBOL("s:10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvp");
+  SWIFT_INLINE_THUNK void setMatrix(const LatticeFloat4x4& value) SWIFT_SYMBOL("s:10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvp");
+  static SWIFT_INLINE_THUNK XformGPU init(const LatticeFloat4x4& matrix) SWIFT_SYMBOL("s:10LatticeUSD8XformGPUV6matrixAcA0A8Float4x4V_tcfc");
+private:
+  SWIFT_INLINE_THUNK XformGPU() noexcept {}
+  static SWIFT_INLINE_THUNK XformGPU _make() noexcept { return XformGPU(); }
+  SWIFT_INLINE_THUNK const char * _Nonnull _getOpaquePointer() const noexcept { return _storage; }
+  SWIFT_INLINE_THUNK char * _Nonnull _getOpaquePointer() noexcept { return _storage; }
+
+  alignas(4) char _storage[64];
+  friend class _impl::_impl_XformGPU;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+  typedef char $s10LatticeUSD8XformGPUVD;
+  static inline constexpr $s10LatticeUSD8XformGPUVD __swift_mangled_name = 0;
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+};
+
+namespace _impl {
+
+class _impl_XformGPU {
+public:
+  static SWIFT_INLINE_THUNK char * _Nonnull getOpaquePointer(XformGPU &object) { return object._getOpaquePointer(); }
+  static SWIFT_INLINE_THUNK const char * _Nonnull getOpaquePointer(const XformGPU &object) { return object._getOpaquePointer(); }
+  template<class T>
+  static SWIFT_INLINE_PRIVATE_HELPER XformGPU returnNewValue(T callable) {
+    auto result = XformGPU::_make();
+    callable(result._getOpaquePointer());
+    return result;
+  }
+  static SWIFT_INLINE_THUNK void initializeWithTake(char * _Nonnull destStorage, char * _Nonnull srcStorage) {
+    auto metadata = _impl::$s10LatticeUSD8XformGPUVMa(0);
+    auto *vwTableAddr = reinterpret_cast<swift::_impl::ValueWitnessTable **>(metadata._0) - 1;
+#ifdef __arm64e__
+    auto *vwTable = reinterpret_cast<swift::_impl::ValueWitnessTable *>(ptrauth_auth_data(reinterpret_cast<void *>(*vwTableAddr), ptrauth_key_process_independent_data, ptrauth_blend_discriminator(vwTableAddr, 11839)));
+#else
+    auto *vwTable = *vwTableAddr;
+#endif
+    vwTable->initializeWithTake(destStorage, srcStorage, metadata._0);
+  }
+};
+
+} // namespace _impl
+
+} // end namespace 
+
+namespace swift SWIFT_PRIVATE_ATTR {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template<>
+struct TypeMetadataTrait<LatticeUSD::XformGPU> {
+  static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+    return LatticeUSD::_impl::$s10LatticeUSD8XformGPUVMa(0)._0;
+  }
+};
+namespace _impl{
+template<>
+inline const constexpr bool isValueType<LatticeUSD::XformGPU> = true;
+template<>
+struct implClassFor<LatticeUSD::XformGPU> { using type = LatticeUSD::_impl::_impl_XformGPU; };
+} // namespace
+#pragma clang diagnostic pop
+} // namespace swift
+
+namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
+
+  SWIFT_INLINE_THUNK float InstanceXform::getTx() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2txSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setTx(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2txSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getTy() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2tySfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setTy(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2tySfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getTz() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2tzSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setTz(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2tzSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getSx() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2sxSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setSx(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2sxSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getSy() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2sySfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setSy(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2sySfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getSz() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2szSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setSz(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2szSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getRx() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rxSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setRx(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rxSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getRy() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rySfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setRy(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rySfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getRz() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rzSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setRz(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rzSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float InstanceXform::getRw() const {
+  return LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rwSfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void InstanceXform::setRw(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2rwSfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK InstanceXform InstanceXform::init(float tx, float ty, float tz, float sx, float sy, float sz, float rx, float ry, float rz, float rw) {
+  return LatticeUSD::_impl::_impl_InstanceXform::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV2tx2ty2tz2sx2sy2sz2rx2ry2rz2rwACSf_S9ftcfC(result, tx, ty, tz, sx, sy, sz, rx, ry, rz, rw);
+  });
+  }
+  SWIFT_INLINE_THUNK InstanceXform InstanceXform::getIdentity() {
+  return LatticeUSD::_impl::_impl_InstanceXform::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD13InstanceXformV8identityACvgZ(result);
+  });
+  }
   SWIFT_INLINE_THUNK double LatticeDouble3::getX() const {
   return LatticeUSD::_impl::$s10LatticeUSD0A7Double3V1xSdvg(LatticeUSD::_impl::swift_interop_passDirect_LatticeUSD_double_0_8_double_8_16_double_16_24(_getOpaquePointer()));
   }
@@ -6182,6 +6868,159 @@ return *storageObjectPtr;
   SWIFT_INLINE_THUNK swift::Int LatticeFloat4::getHashValue() const {
   return LatticeUSD::_impl::$s10LatticeUSD0A6Float4V9hashValueSivg(LatticeUSD::_impl::swift_interop_passDirect_LatticeUSD_float_0_4_float_4_8_float_8_12_float_12_16(_getOpaquePointer()));
   }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM00() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m00Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM00(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m00Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM01() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m01Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM01(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m01Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM02() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m02Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM02(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m02Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM03() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m03Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM03(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m03Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM10() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m10Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM10(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m10Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM11() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m11Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM11(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m11Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM12() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m12Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM12(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m12Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM13() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m13Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM13(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m13Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM20() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m20Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM20(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m20Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM21() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m21Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM21(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m21Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM22() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m22Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM22(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m22Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM23() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m23Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM23(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m23Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM30() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m30Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM30(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m30Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM31() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m31Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM31(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m31Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM32() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m32Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM32(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m32Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK float LatticeFloat4x4::getM33() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m33Sfvg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK void LatticeFloat4x4::setM33(float value) {
+  LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V3m33Sfvs(value, _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4 LatticeFloat4x4::init(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) {
+  return LatticeUSD::_impl::_impl_LatticeFloat4x4::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4VyACSf_S15ftcfC(result, m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33);
+  });
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4 LatticeFloat4x4::getIdentity() {
+  return LatticeUSD::_impl::_impl_LatticeFloat4x4::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V8identityACvgZ(result);
+  });
+  }
+  SWIFT_INLINE_THUNK Pixar::GfMatrix4d LatticeFloat4x4::getAsGfMatrix4d() const {
+alignas(alignof(Pixar::GfMatrix4d)) char storage[sizeof(Pixar::GfMatrix4d)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<Pixar::GfMatrix4d *>(storage);
+LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvg(storage, _getOpaquePointer());
+return *storageObjectPtr;
+  }
+  SWIFT_INLINE_THUNK swift::Int LatticeFloat4x4::getHashValue() const {
+  return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V9hashValueSivg(_getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK Pixar::SdfPath LatticeInstanceSource::getInstancerPath() {
+alignas(alignof(Pixar::SdfPath)) char storage[sizeof(Pixar::SdfPath)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<Pixar::SdfPath *>(storage);
+LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvg(storage, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+Pixar::SdfPath result(static_cast<Pixar::SdfPath &&>(*storageObjectPtr));
+storageObjectPtr->~SdfPath();
+return result;
+  }
+  SWIFT_INLINE_THUNK LatticeInstanceSource LatticeInstanceSource::init(const LatticeCore::LatticeStore& store, const Pixar::SdfPath& instancerPath) {
+  alignas(alignof(LatticeCore::LatticeStore)) char copyBuffer_consumedParamCopy_store[sizeof(LatticeCore::LatticeStore)];
+  auto &consumedParamCopy_store = *(new(copyBuffer_consumedParamCopy_store) LatticeCore::LatticeStore(store));
+  swift::_impl::ConsumedValueStorageDestroyer<LatticeCore::LatticeStore> storageGuard_consumedParamCopy_store(consumedParamCopy_store);
+  alignas(alignof(Pixar::SdfPath)) char copyBuffer_consumedParamCopy_instancerPath[sizeof(Pixar::SdfPath)];
+  auto &consumedParamCopy_instancerPath = *(new(copyBuffer_consumedParamCopy_instancerPath) Pixar::SdfPath(instancerPath));
+  swift::_impl::ConsumedValueStorageDestroyer<Pixar::SdfPath> storageGuard_consumedParamCopy_instancerPath(consumedParamCopy_instancerPath);
+  return _impl::_impl_LatticeInstanceSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0VtcfC(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_store), swift::_impl::getOpaquePointer(consumedParamCopy_instancerPath), swift::TypeMetadataTrait<LatticeInstanceSource>::getTypeMetadata()));
+  }
+  SWIFT_INLINE_THUNK void LatticeInstanceSource::bind(void const * _Nullable base, swift::Int count) {
+  LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC4bind4base5countySVSg_SitF(base, count, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeInstanceSource::beginReadPhase() {
+  LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC14beginReadPhaseyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeInstanceSource::endReadPhase() {
+  LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC12endReadPhaseyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void const * _Nullable LatticeInstanceSource::instanceBase() {
+  return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC12instanceBaseSVSgyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK swift::Int LatticeInstanceSource::instanceCount() {
+  return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC13instanceCountSiyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeInstanceSource::markDirty() {
+  LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC9markDirtyyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK bool LatticeInstanceSource::drainDirty() {
+  return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC10drainDirtySbyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
   SWIFT_INLINE_THUNK LatticeXformSource LatticeXformSource::init(const LatticeCore::LatticeStore& store, const LatticeCore::LatticePathTable& paths) {
   alignas(alignof(LatticeCore::LatticeStore)) char copyBuffer_consumedParamCopy_store[sizeof(LatticeCore::LatticeStore)];
   auto &consumedParamCopy_store = *(new(copyBuffer_consumedParamCopy_store) LatticeCore::LatticeStore(store));
@@ -6294,6 +7133,19 @@ return result;
   SWIFT_INLINE_THUNK Xform Xform::init(const LatticeDouble4x4& matrix) {
   return LatticeUSD::_impl::_impl_Xform::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
     LatticeUSD::_impl::$s10LatticeUSD5XformV6matrixAcA0A9Double4x4V_tcfC(result, LatticeUSD::_impl::_impl_LatticeDouble4x4::getOpaquePointer(matrix));
+  });
+  }
+  SWIFT_INLINE_THUNK LatticeFloat4x4 XformGPU::getMatrix() const {
+  return LatticeUSD::_impl::_impl_LatticeFloat4x4::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvg(result, _getOpaquePointer());
+  });
+  }
+  SWIFT_INLINE_THUNK void XformGPU::setMatrix(const LatticeFloat4x4& value) {
+  LatticeUSD::_impl::$s10LatticeUSD8XformGPUV6matrixAA0A8Float4x4Vvs(LatticeUSD::_impl::_impl_LatticeFloat4x4::getOpaquePointer(value), _getOpaquePointer());
+  }
+  SWIFT_INLINE_THUNK XformGPU XformGPU::init(const LatticeFloat4x4& matrix) {
+  return LatticeUSD::_impl::_impl_XformGPU::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+    LatticeUSD::_impl::$s10LatticeUSD8XformGPUV6matrixAcA0A8Float4x4V_tcfC(result, LatticeUSD::_impl::_impl_LatticeFloat4x4::getOpaquePointer(matrix));
   });
   }
 
