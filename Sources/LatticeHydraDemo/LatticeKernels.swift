@@ -71,7 +71,7 @@ public enum LatticeKernel: String, CaseIterable, Sendable
       case .galaxy: "~40 flops"
       case .curl: "18 fbm, 3 octaves"
       case .lorenz: "128 Euler steps"
-      case .mandelbulb: "16 iters, pow/acos/atan2"
+      case .mandelbulb: "8 marches x 16 iters"
     }
   }
 }
@@ -191,6 +191,38 @@ public enum LatticeKernel: String, CaseIterable, Sendable
                     (x1.y - x0.y) - (y1.x - y0.x)) / (2.0f * e);
     }
 
+    // ---- mandelbulb -------------------------------------------------------
+
+    // distance from `c` to the surface of the bulb, positive outside.
+    //
+    // pulled out as a function because the kernel calls it several times
+    // per cube while marching, rather than once - which is also where nearly
+    // all of that kernel's cost comes from.
+    static inline float bulbDistance(float3 c, float power)
+    {
+      float3 z = c;
+      float dr = 1.0f;
+      float r = 0.0f;
+
+      for (int i = 0; i < 16; ++i)
+      {
+        r = length(z);
+        if (r > 2.0f) { break; }
+
+        const float theta = acos(clamp(z.z / max(r, 1e-6f), -1.0f, 1.0f));
+        const float phi = atan2(z.y, z.x);
+
+        dr = pow(r, power - 1.0f) * power * dr + 1.0f;
+
+        const float zr = pow(r, power);
+        const float th = theta * power;
+        const float ph = phi * power;
+        z = zr * float3(sin(th) * cos(ph), sin(th) * sin(ph), cos(th)) + c;
+      }
+
+      return 0.5f * log(max(r, 1e-6f)) * r / max(dr, 1e-6f);
+    }
+
     // ---- kernels ----------------------------------------------------------
 
     kernel void kRipple(device InstanceXform *out [[buffer(0)]],
@@ -307,39 +339,48 @@ public enum LatticeKernel: String, CaseIterable, Sendable
       if (id >= count) { return; }
       const RippleMotion mo = motions[id];
       const float3 h = homeOf(mo);
-
-      // distance estimate to the bulb, per instance, per frame. sixteen
-      // iterations of pow/acos/atan2 is the most expensive thing here by
-      // a wide margin, and the animated exponent means none of it can be
-      // hoisted.
-      const float3 c = h * 0.019f;
-      float3 z = c;
-      float dr = 1.0f;
-      float r = 0.0f;
       const float power = 8.0f + 3.0f * sin(t * 0.25f);
 
-      for (int i = 0; i < 16; ++i)
+      // every cube walks onto the surface, rather than sitting on a grid slot
+      // and being hidden when it misses.
+      //
+      // sampling the bulb on the grid and keeping the hits wastes most of the
+      // field - only a few thousand cubes of the hundred thousand land near the
+      // surface - and the ones that survive are still on a regular lattice, so
+      // the result reads as moire rather than as a fractal. marching instead
+      // puts all hundred thousand *on* the surface, at irregular positions.
+      //
+      // each cube gets its own ray out of the centre. the jitter matters: cubes
+      // sharing a grid diagonal have identical directions and would otherwise
+      // converge on exactly the same landing point.
+      float3 dir = normalize(h + float3(1e-5f));
+      dir = normalize(dir + float3(sin(mo.phase * 3.1f),
+                                   cos(mo.phase * 2.7f),
+                                   sin(mo.phase * 1.9f)) * 0.05f);
+
+      // sphere-trace inward from outside the bulb. stepping by the
+      // distance estimate is safe because it never overshoots the
+      // surface.
+      float dist = 2.0f;
+      for (int s = 0; s < 8; ++s)
       {
-        r = length(z);
-        if (r > 2.0f) { break; }
-
-        const float theta = acos(clamp(z.z / max(r, 1e-6f), -1.0f, 1.0f));
-        const float phi = atan2(z.y, z.x);
-
-        dr = pow(r, power - 1.0f) * power * dr + 1.0f;
-
-        const float zr = pow(r, power);
-        const float th = theta * power;
-        const float ph = phi * power;
-        z = zr * float3(sin(th) * cos(ph), sin(th) * sin(ph), cos(th)) + c;
+        const float d = bulbDistance(dir * dist, power);
+        // a negative estimate means we are inside the set,
+        // so this also catches an overshoot rather than
+        // letting it creep further in.
+        if (d < 0.004f) { break; }
+        dist -= d;
       }
 
-      const float de = 0.5f * log(max(r, 1e-6f)) * r / max(dr, 1e-6f);
-      const float3 dir = normalize(h + float3(1e-5f));
-      const float3 p = h + dir * clamp(de * 55.0f, -30.0f, 30.0f);
+      // back out of the bulb's domain into the field's world
+      // scale, then spin the whole thing so the silhouette
+      // reads as solid.
+      const float a = t * 0.3f;
+      const float ca = cos(a), sa = sin(a);
+      const float3 s = dir * dist * 46.0f;
+      const float3 p = float3(s.x * ca - s.z * sa, s.y, s.x * sa + s.z * ca);
 
-      const float k = mo.scale * (0.55f + 0.9f * clamp(de * 6.0f, 0.0f, 1.0f));
-      writeInstance(out[id], p, float3(k), dir, t * 0.4f + mo.phase);
+      writeInstance(out[id], p, float3(mo.scale * 0.8f), float3(0,1,0), a);
     }
     """
 #endif
