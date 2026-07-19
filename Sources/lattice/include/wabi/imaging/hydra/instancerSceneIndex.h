@@ -20,7 +20,13 @@
 
 #include <Sdf/path.h>
 
+#include <Vt/array.h>
+
+#include <Hd/dataSource.h>
+
 #include <Hd/filteringSceneIndex.h>
+
+#include <mutex>
 
 #include "wabi/core/lattice.h"
 #include "wabi/scene/usd.h"
@@ -73,6 +79,21 @@ class LatticeInstancerSceneIndex : public HdSingleInputFilteringSceneIndexBase {
 
  private:
   LatticeUSD::LatticeInstanceSource *_latticeSource;
+
+  /// Instance indices narrowed to the live count, cached on that count.
+  ///
+  /// `GetPrim` is const but runs every frame, while this only changes when the
+  /// live count does. `mutable`, so the O(count) filter is skipped on every frame
+  /// that did not move the slider.
+  ///
+  /// Guarded, because Storm syncs prims in parallel and so calls `GetPrim` on
+  /// this instancer from several threads at once. The handle is a `shared_ptr`,
+  /// and concurrently reading one while another thread assigns it races on the
+  /// control block - the losing thread ends up holding a pointer the winner has
+  /// already freed, which reaches the GPU as a garbage buffer address.
+  mutable std::mutex _indicesMutex;
+  mutable HdVectorDataSourceHandle _instanceIndices;
+  mutable size_t _indicesCount = 0;
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE

@@ -186,6 +186,17 @@ public final class LatticeFrameDriver: LatticeDriving
   /// Freezing still pays the notify cost but skips the math, which makes it
   /// easy to show what the mutation pass alone is worth.
   public var isPaused: Bool = false
+  public var notifiesHydra: Bool = true
+
+  /// The per-prim path has no instancer to mask, and its cost is one prim per
+  /// cube by construction - narrowing it would mean respawning the scene. So the
+  /// count is fixed here and the UI hides the slider.
+  public var maximumCount: Int { scene.cubeCount }
+  public var activeCount: Int
+  {
+    get { scene.cubeCount }
+    set { _ = newValue }
+  }
 
   /// Stored to satisfy ``LatticeDriving``, but inert: the per-prim path exists
   /// as the "what per-prim scene-graph updates cost" comparison, and carries
@@ -287,7 +298,11 @@ public final class LatticeFrameDriver: LatticeDriving
     let notifyStart = CFAbsoluteTimeGetCurrent()
     if !isPaused
     {
-      scene.source.markDirty(contentsOf: scene.animatedPaths)
+      // when off, hydra never re-syncs.
+      if notifiesHydra
+      {
+        scene.source.markDirty(contentsOf: scene.animatedPaths)
+      }
     }
 
     // 3. close the write window in the order the store asserts on, bump the

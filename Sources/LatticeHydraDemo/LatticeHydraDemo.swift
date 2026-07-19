@@ -47,6 +47,10 @@ struct LatticeHydraDemo: App
   /// Mirrors the driver's kernel so the buttons can show which one is live.
   /// The driver is the source of truth, this only drives the UI's highlight.
   @State var kernel: LatticeKernel = .ripple
+  /// Mirrors `driver.notifiesHydra` for the toggle's own state.
+  @State var notifies: Bool = true
+  /// Mirrors `driver.activeCount` for the slider's own state.
+  @State var active: Int = 0
 
   init()
   {
@@ -103,6 +107,14 @@ struct LatticeHydraDemo: App
     self.hydra = Hydra.RenderEngine(stage: stage)
     self.driver = driver
     self.hydra.frameDelegate = driver
+
+    // hides the dome from camera rays while
+    // it still lights the scene (makes our
+    // tiny prim cubes easier to see).
+    self.hydra.getEngine().SetRendererSetting(
+      Tf.Token("domeLightCameraVisibility"),
+      VtValue(false)
+    )
 
     let live = liveCount()
     print("[lattice] scene index live on \(live) render index(es)")
@@ -163,9 +175,45 @@ struct LatticeHydraDemo: App
                   .foregroundColor(Color(white: 0.55))
                   .padding(.top, 8)
               }
+
+              if driver.supportsKernelSwitching
+              {
+                Text("LIVE INSTANCES  \(active.formatted())")
+                  .font(.system(size: 10, weight: .bold))
+                  .foregroundColor(Color(white: 0.55))
+                  .padding(.top, 8)
+
+                HStack(spacing: 4)
+                {
+                  ForEach(LatticeHydraDemo.countPresets(upTo: driver.maximumCount), id: \.self)
+                  { preset in
+                    Button(LatticeHydraDemo.presetLabel(preset))
+                    {
+                      active = preset
+                      driver.activeCount = preset
+                    }
+                  }
+                }
+
+                Slider(
+                  value: $active,
+                  in: 1000 ... max(1000, driver.maximumCount)
+                )
+                .frame(width: 260.0)
+              }
+
+              Text("PUBLISH TO HYDRA")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(Color(white: 0.55))
+                .padding(.top, 8)
+
+              Toggle("Notify", isOn: $notifies.onChange { on in
+                driver.notifiesHydra = on
+              })
+              .toggleStyle(.switch)
             }
             .padding(14)
-            .background(Color(white: 0.04, opacity: 0.62))
+            .background(Color(white: 0.24, opacity: 0.62))
             .cornerRadius(10)
             .foregroundColor(Color(white: 0.96))
             .padding(16)
@@ -178,14 +226,40 @@ struct LatticeHydraDemo: App
         .task
         {
           await hydra.waitUntilSceneReady()
+          active = driver.activeCount
           isReady = true
 
           // the driver is written from the render thread, poll a copy rather than
           // pushing from there, so the HUD never reaches into a frame in flight.
+          var activeInstanceCount: Int? = nil
+          var stableTicks = 0
+
           while !Task.isCancelled
           {
             stats = driver.snapshot()
-            try? await Task.sleep(for: .milliseconds(250))
+
+            if active != driver.activeCount
+            {
+              if activeInstanceCount == active
+              {
+                stableTicks += 1
+              }
+              else
+              {
+                activeInstanceCount = active
+                stableTicks = 0
+              }
+
+              // two ticks indicate the drag has actually ended.
+              if stableTicks >= 2
+              {
+                driver.activeCount = active
+                activeInstanceCount = nil
+                stableTicks = 0
+              }
+            }
+
+            try? await Task.sleep(for: .milliseconds(120))
           }
         }
     }
@@ -193,6 +267,25 @@ struct LatticeHydraDemo: App
 }
 
 /// One `label value` line of the HUD.
+extension LatticeHydraDemo
+{
+  /// Round counts to jump between, capped at what was allocated at launch.
+  static func countPresets(upTo maximum: Int) -> [Int]
+  {
+    let candidates = [50_000, 100_000, 250_000, 500_000, 1_000_000]
+    var presets = candidates.filter { $0 < maximum }
+    presets.append(maximum)
+    return presets
+  }
+
+  static func presetLabel(_ count: Int) -> String
+  {
+    count >= 1_000_000
+      ? "\(count / 1_000_000)M"
+      : "\(max(1, count / 1_000))k"
+  }
+}
+
 struct LatticeHUDRow: View
 {
   let label: String
@@ -218,16 +311,31 @@ struct LatticeHUDRow: View
   }
 }
 
+extension Binding {
+  /// Passes the new value on to `onChange` after storing it.
+  func onChange(_ onChange: @escaping (Value) -> Void) -> Binding<Value> {
+    Binding<Value>(
+      get: { self.wrappedValue },
+      set: { newValue in
+        self.wrappedValue = newValue
+        onChange(newValue)
+      }
+    )
+  }
+}
+
 extension Binding where Value: Equatable {
-    func isEqualTo(_ expectedValue: Value, onChange: @escaping (Value) -> Void) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { self.wrappedValue == expectedValue },
-            set: { isSelected in
-                if isSelected {
-                    self.wrappedValue = expectedValue
-                    onChange(expectedValue)
-                }
-            }
-        )
-    }
+  /// Checks if the wrapped value is equal to `expectedValue`,
+  /// and passes the new value on to `onChange` after storing it.
+  func isEqualTo(_ expectedValue: Value, onChange: @escaping (Value) -> Void) -> Binding<Bool> {
+    Binding<Bool>(
+      get: { self.wrappedValue == expectedValue },
+      set: { isSelected in
+        if isSelected {
+          self.wrappedValue = expectedValue
+          onChange(expectedValue)
+        }
+      }
+    )
+  }
 }

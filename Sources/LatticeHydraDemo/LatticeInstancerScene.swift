@@ -37,11 +37,44 @@ public struct LatticeInstancerScene
   public let store: LatticeStore
   public let source: LatticeInstanceSource
   public let instanceCount: Int
+  /// Half-extent of the authored grid, in world units.
+  /// Kernels normalize by it so their look does not
+  /// follow '--count'.
+  public let halfExtent: Double
   public let drivePath: LatticeDrivePath
 
   #if canImport(Metal)
     public let device: (any MTLDevice)?
   #endif
+}
+
+/// A small deterministic generator, so the shuffled instance order and
+/// what any given slider position shows - is identical on every run.
+struct SeededGenerator: RandomNumberGenerator
+{
+  private var state: UInt64
+
+  init(seed: UInt64)
+  {
+    state = seed == 0 ? 0x9E37_79B9_7F4A_7C15 : seed
+  }
+
+  mutating func next() -> UInt64
+  {
+    // splitmix64
+    state &+= 0x9E37_79B9_7F4A_7C15
+    var z = state
+    z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+    z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+    return z ^ (z >> 31)
+  }
+}
+
+extension Double
+{
+  /// Cube root, for turning a fraction of the instances into
+  /// the linear scale that preserves their density.
+  var cbrt: Double { Foundation.cbrt(self) }
 }
 
 public enum LatticeInstancerSceneBuilder
@@ -72,7 +105,7 @@ public enum LatticeInstancerSceneBuilder
   /// `extent` *is* authored, because the render engine frames its camera from
   /// the stage's world bound - and computing that bound for an instancer with
   /// no extent hint means expanding every instance.
-  static func makeStage(count: Int) -> (stage: UsdStage, motions: [RippleMotion])
+  static func makeStage(count: Int) -> (stage: UsdStage, motions: [RippleMotion], halfExtent: Double)
   {
     let side = LatticeSceneBuilder.gridSide(for: count)
     let spacing = 2.2
@@ -85,6 +118,10 @@ public enum LatticeInstancerSceneBuilder
     positions.reserveCapacity(count * 28)
     var protoIndices = ""
     protoIndices.reserveCapacity(count * 2)
+
+    // built as tuples first so the whole set can be shuffled before anything is written out.
+    var built: [(x: Double, y: Double, z: Double, motion: RippleMotion, proto: Int)] = []
+    built.reserveCapacity(count)
 
     var index = 0
     outer: for ix in 0 ..< side
@@ -101,31 +138,44 @@ public enum LatticeInstancerSceneBuilder
           let radius = (x * x + y * y + z * z).squareRoot()
           let jitter = Double((index &* 2654435761) % 1000) / 1000.0
 
-          motions.append(RippleMotion(
-            homeX: Float(x), homeY: Float(y), homeZ: Float(z),
-            radius: Float(radius),
-            phase: Float(jitter * 6.283185307179586),
-            spin: Float(0.6 + jitter * 1.8),
-            scale: 0.42
-          ))
-
-          if index > 0
-          {
-            positions += ", "
-            protoIndices += ", "
-          }
-          positions += "(\(x), \(y), \(z))"
-
           // same radius-driven hue as the per-prim scene, quantised onto the
           // prototype palette - concentric rainbow shells for the ripple to
           // travel through.
           let hue = (radius / (half * 1.7321 + 0.0001)).clamped01
-          let proto = min(paletteCount - 1, Int(hue * Double(paletteCount)))
-          protoIndices += "\(proto)"
+
+          built.append((
+            x: x, y: y, z: z,
+            motion: RippleMotion(
+              homeX: Float(x), homeY: Float(y), homeZ: Float(z),
+              radius: Float(radius),
+              phase: Float(jitter * 6.283185307179586),
+              spin: Float(0.6 + jitter * 1.8),
+              scale: 0.42
+            ),
+            proto: min(paletteCount - 1, Int(hue * Double(paletteCount)))
+          ))
 
           index += 1
         }
       }
+    }
+
+    // shuffle once, so that a subset of the instances
+    // is a spatially uniform sample of the field rather
+    // than a slab of it.
+    var rng = SeededGenerator(seed: 0x5EED_1A77_1CE0)
+    built.shuffle(using: &rng)
+
+    for (i, item) in built.enumerated()
+    {
+      motions.append(item.motion)
+      if i > 0
+      {
+        positions += ", "
+        protoIndices += ", "
+      }
+      positions += "(\(item.x), \(item.y), \(item.z))"
+      protoIndices += "\(item.proto)"
     }
 
     // padded so the ripple's lift and swell stay inside the authored bound.
@@ -165,12 +215,12 @@ public enum LatticeInstancerSceneBuilder
 
     let stage = UsdStage.open(url.path)
     AppUtils.addDomeLight(to: stage)
-    return (stage, motions)
+    return (stage, motions, half)
   }
 
   public static func build(instanceCount: Int, useGPU: Bool = true) -> LatticeInstancerScene
   {
-    let (stage, motions) = makeStage(count: instanceCount)
+    let (stage, motions, halfExtent) = makeStage(count: instanceCount)
 
     let store = LatticeStore()
     var drivePath: LatticeDrivePath = .cpu
@@ -221,6 +271,7 @@ public enum LatticeInstancerSceneBuilder
         store: store,
         source: source,
         instanceCount: motions.count,
+        halfExtent: halfExtent,
         drivePath: drivePath,
         device: device
       )
@@ -230,6 +281,7 @@ public enum LatticeInstancerSceneBuilder
         store: store,
         source: source,
         instanceCount: motions.count,
+        halfExtent: halfExtent,
         drivePath: drivePath
       )
     #endif

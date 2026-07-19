@@ -36,6 +36,15 @@ public protocol LatticeDriving: Hydra.FrameDelegate
   /// `false` where switching does nothing, so the UI can say so rather than
   /// offering buttons that appear to do nothing.
   var supportsKernelSwitching: Bool { get }
+
+  /// Whether the frame tells Hydra anything changed.
+  var notifiesHydra: Bool { get set }
+
+  /// How many instances are live, of the total allocated at launch.
+  var activeCount: Int { get set }
+
+  /// The ceiling, for the slider's upper bound.
+  var maximumCount: Int { get }
 }
 
 /// Drives the instancer scene.
@@ -56,6 +65,22 @@ public final class LatticeInstancerDriver: LatticeDriving
   private var smoother = LatticeStatsSmoother()
 
   public var isPaused: Bool = false
+  public var notifiesHydra: Bool = true
+
+  public var maximumCount: Int { scene.instanceCount }
+
+  private var _activeCount: Int
+  public var activeCount: Int
+  {
+    get { _activeCount }
+    set
+    {
+      let clamped = max(1, min(newValue, scene.instanceCount))
+      guard clamped != _activeCount else { return }
+      _activeCount = clamped
+      scene.source.setActiveCount(clamped)
+    }
+  }
 
   /// Read on the render thread, written from the UI thread when a button is
   /// pressed. A `Bool`-sized enum write is atomic in practice and the worst a
@@ -77,6 +102,7 @@ public final class LatticeInstancerDriver: LatticeDriving
   public init(scene: LatticeInstancerScene)
   {
     self.scene = scene
+    self._activeCount = scene.instanceCount
 
     #if canImport(Metal)
       if scene.drivePath == .gpu, let device = scene.device
@@ -191,8 +217,12 @@ public final class LatticeInstancerDriver: LatticeDriving
 
     // one flag, one prim. the array itself is never copied here - the scene
     // index de-interleaves it straight out of the column when hydra pulls.
+    //
+    // with `notifiesHydra` off, the kernel above still ran and the store still
+    // changed, we just never say so. hydra keeps serving the arrays it already
+    // has, so the field freezes while everything upstream of it carries on.
     let notifyStart = CFAbsoluteTimeGetCurrent()
-    if !isPaused
+    if !isPaused, notifiesHydra
     {
       scene.source.markDirty()
     }
@@ -239,7 +269,8 @@ public final class LatticeInstancerDriver: LatticeDriving
 
       for (xformColumn, motionColumn) in columns
       {
-        let count = xformColumn.count
+        // only the live active instances are dispatched.
+        let count = min(xformColumn.count, _activeCount)
         guard count > 0,
               let commandBuffer = commandQueue.makeCommandBuffer(),
               let encoder = commandBuffer.makeComputeCommandEncoder()
@@ -255,6 +286,17 @@ public final class LatticeInstancerDriver: LatticeDriving
         encoder.setBuffer(motionColumn.metalBuffer, offset: 0, index: 1)
         encoder.setBytes(&time, length: MemoryLayout<Float>.stride, index: 2)
         encoder.setBytes(&elementCount, length: MemoryLayout<UInt32>.stride, index: 3)
+
+        // shrinks the field so that fewer instances stay at the
+        // same density rather than thinning out across the original
+        // volume.
+        var compaction = Float(
+          (Double(count) / Double(max(1, xformColumn.count))).cbrt
+        )
+        encoder.setBytes(&compaction, length: MemoryLayout<Float>.stride, index: 4)
+
+        var fieldExtent = Float(scene.halfExtent)
+        encoder.setBytes(&fieldExtent, length: MemoryLayout<Float>.stride, index: 5)
         encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
         encoder.endEncoding()
         commandBuffer.commit()

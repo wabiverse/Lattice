@@ -4385,6 +4385,9 @@ SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC14beginReadPhaseyyF(SWIFT_CON
 SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC12endReadPhaseyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // endReadPhase()
 SWIFT_EXTERN void const * _Nullable $s10LatticeUSD0A14InstanceSourceC12instanceBaseSVSgyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // instanceBase()
 SWIFT_EXTERN ptrdiff_t $s10LatticeUSD0A14InstanceSourceC13instanceCountSiyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // instanceCount()
+SWIFT_EXTERN ptrdiff_t $s10LatticeUSD0A14InstanceSourceC11activeCountSiyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // activeCount()
+SWIFT_EXTERN bool $s10LatticeUSD0A14InstanceSourceC18drainTopologyDirtySbyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // drainTopologyDirty()
+SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC14setActiveCountyySiF(ptrdiff_t count, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // setActiveCount(_:)
 SWIFT_EXTERN void $s10LatticeUSD0A14InstanceSourceC9markDirtyyyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // markDirty()
 SWIFT_EXTERN bool $s10LatticeUSD0A14InstanceSourceC10drainDirtySbyF(SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // drainDirty()
 SWIFT_EXTERN void * _Nonnull $s10LatticeUSD0A11XformSourceC5store5pathsAC0A4Core0A5StoreC_AF0A9PathTableCtcfC(void * _Nonnull store, void * _Nonnull paths, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(store:paths:)
@@ -5563,11 +5566,11 @@ inline const constexpr bool isUsableInGenericContext<LatticeUSD::LatticeInstance
 namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
 /// The live, app-owned instance buffer that <code>LatticeInstancerSceneIndex</code>
 /// reads through when Hydra pulls the instancer prim.
-/// The per-prim <code>LatticeXformSource</code> answers one <code>GetPrim()</code> per cube, which
-/// means a scene of N moving cubes costs N scene-index answers and N dirtied
-/// prims every frame. This answers <em>one</em> prim holding all N instances, so the
-/// frame’s notification set is a single path no matter how large N gets. Same
-/// store, same kernel, same frame contract - a different shape of scene.
+/// The per-prim <code>LatticeXformSource</code> answers one <code>GetPrim()</code> per cube,
+/// which means a scene of N moving cubes costs N scene-index answers and N dirtied
+/// prims every frame. This answers <em>one</em> prim holding all N instances, so the frame’s
+/// notification set is a single path no matter how large N gets. Same store, same kernel,
+/// same frame contract - a different shape of scene.
 /// The frame contract is unchanged:
 /// \code
 /// mutate -> store.advanceChangeTick() -> sceneIndex.Tick() -> beginReadPhase()
@@ -5600,9 +5603,22 @@ public:
 /// the caller strides it as ten floats per instance.
   SWIFT_INLINE_THUNK void const * _Nullable instanceBase() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC12instanceBaseSVSgyF");
   SWIFT_INLINE_THUNK swift::Int instanceCount() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC13instanceCountSiyF");
+/// How many instances are live, clamped to what is actually bound.
+/// Read from the scene index’s <code>GetPrim()</code> to size the fill and
+/// build the mask.
+  SWIFT_INLINE_THUNK swift::Int activeCount() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC11activeCountSiyF");
+/// Whether the mask changed since it was last published.
+/// Drained by the scene index’s <code>Tick()</code>, which then adds the instancer
+/// topology to the dirty set - the primvars alone would leave Hydra drawing
+/// the old count.
+  SWIFT_INLINE_THUNK bool drainTopologyDirty() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC18drainTopologyDirtySbyF");
+/// Narrows the field to its first <code>count</code> instances.
+/// Safe to call from the UI thread between frames -
+/// the flag is only read during the mutation phase.
+  SWIFT_INLINE_THUNK void setActiveCount(swift::Int count) SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC14setActiveCountyySiF");
 /// Flags the instancer as needing a <code>PrimsDirtied</code> this frame.
-/// A single bool, not a path set: there is only ever one prim to dirty, which
-/// is the entire point of this path.
+/// A single bool, not a path set: there is only ever one prim to dirty,
+/// which is the entire point of this path.
   SWIFT_INLINE_THUNK void markDirty() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC9markDirtyyyF");
 /// Drains the flag. Must run before <code>beginReadPhase()</code>.
   SWIFT_INLINE_THUNK bool drainDirty() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC10drainDirtySbyF");
@@ -5733,11 +5749,11 @@ public:
 /// key <code>USDPopulationSync</code> bound with, courtesy of <code>SdfPath</code> interning.
 /// Reads the GPU column first, then the CPU one.
 /// A scene driven by a compute kernel carries only <code>XformGPU</code>, and this is
-/// the point where its single-precision matrix is widened to the
-/// double-precision <code>GfMatrix4d</code> USD wants. Doing it here rather than in a
-/// bulk pass is the whole reason the GPU path needs no CPU touch: Hydra pulls
-/// one prim at a time anyway, so the widening rides along with a read that
-/// was already happening, and prims Hydra never asks for are never converted.
+/// the point where its single-precision matrix is widened to the double-precision
+/// <code>GfMatrix4d</code> USD wants. Doing it here rather than in a bulk pass is the
+/// whole reason the GPU path needs no CPU touch: Hydra pulls one prim at a
+/// time anyway, so the widening rides along with a read that was already
+/// happening, and prims Hydra never asks for are never converted.
 /// A CPU-driven scene pays one extra failed column lookup per prim for the
 /// <code>XformGPU</code> miss. That is the deliberate trade - the GPU path is the fast
 /// path, so it gets the single lookup.
@@ -7014,6 +7030,15 @@ return result;
   }
   SWIFT_INLINE_THUNK swift::Int LatticeInstanceSource::instanceCount() {
   return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC13instanceCountSiyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK swift::Int LatticeInstanceSource::activeCount() {
+  return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC11activeCountSiyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK bool LatticeInstanceSource::drainTopologyDirty() {
+  return LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC18drainTopologyDirtySbyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
+  }
+  SWIFT_INLINE_THUNK void LatticeInstanceSource::setActiveCount(swift::Int count) {
+  LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC14setActiveCountyySiF(count, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
   SWIFT_INLINE_THUNK void LatticeInstanceSource::markDirty() {
   LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC9markDirtyyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));

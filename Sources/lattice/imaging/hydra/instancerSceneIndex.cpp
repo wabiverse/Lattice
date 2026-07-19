@@ -23,9 +23,14 @@
 #include <Usd/stage.h>
 
 #include <Hd/containerDataSourceEditor.h>
+#include <Hd/instancerTopologySchema.h>
 #include <Hd/primvarsSchema.h>
 #include <Hd/retainedDataSource.h>
+#include <Hd/schemaTypeDefs.h>
 #include <Hd/tokens.h>
+
+#include <algorithm>
+#include <vector>
 
 #include "wabi/imaging/hydra/instancerSceneIndex.h"
 
@@ -94,15 +99,16 @@ HdSceneIndexPrim LatticeInstancerSceneIndex::GetPrim(const SdfPath &primPath) co
 
   const float *f = static_cast<const float *>(base);
 
-  // de-interleave the single column into the three arrays
-  // hydra wants. one pass, once per frame, for the entire
-  // field - as against one `GetPrim()` per cube in the
-  // per-prim scene index.
-  VtVec3fArray translations(count);
-  VtVec3fArray scales(count);
-  VtQuatfArray rotations(count);
+  // how many of them are live. everything below is sized to this rather than to
+  // `count`, so allocation, fill and draw all scale with the slider instead of
+  // staying at whatever '--count' allocated.
+  const size_t active = std::min(static_cast<size_t>(_latticeSource->activeCount()), count);
 
-  for (size_t i = 0; i < count; ++i) {
+  VtVec3fArray translations(active);
+  VtVec3fArray scales(active);
+  VtQuatfArray rotations(active);
+
+  for (size_t i = 0; i < active; ++i) {
     const float *e = f + i * kStride;
     translations[i] = GfVec3f(e[0], e[1], e[2]);
     scales[i] = GfVec3f(e[3], e[4], e[5]);
@@ -112,6 +118,57 @@ HdSceneIndexPrim LatticeInstancerSceneIndex::GetPrim(const SdfPath &primPath) co
   }
 
   HdContainerDataSourceEditor editor(prim.dataSource);
+
+  // the primvar arrays are now shorter than the authored instance set, so the
+  // topology has to be narrowed to match or hydra indexes past their end.
+  // filtering the buckets is O(count), so its cached, it only reruns when the
+  // live count moves.
+  //
+  // storm calls this from several threads at once, so the cache is taken under
+  // a lock and the handle copied out of it - handing the shared_ptr itself to a
+  // reader while another thread reassigns it races on its control block.
+  HdVectorDataSourceHandle instanceIndices;
+  if (active < count) {
+    std::lock_guard<std::mutex> lock(_indicesMutex);
+
+    if (_indicesCount != active) {
+      HdInstancerTopologySchema topology =
+          HdInstancerTopologySchema::GetFromParent(prim.dataSource);
+      HdIntArrayVectorSchema sourceIndices = topology.GetInstanceIndices();
+      const size_t protoCount = sourceIndices.GetNumElements();
+
+      std::vector<HdDataSourceBaseHandle> buckets;
+      buckets.reserve(protoCount);
+
+      for (size_t k = 0; k < protoCount; ++k) {
+        VtIntArray kept;
+        if (HdIntArrayDataSourceHandle src = sourceIndices.GetElement(k)) {
+          const VtIntArray all = src->GetTypedValue(0.0f);
+          kept.reserve(all.size());
+          for (const int index : all) {
+            if (index >= 0 && static_cast<size_t>(index) < active) {
+              kept.push_back(index);
+            }
+          }
+        }
+        buckets.push_back(HdRetainedTypedSampledDataSource<VtIntArray>::New(kept));
+      }
+
+      _instanceIndices = buckets.empty()
+                             ? nullptr
+                             : HdRetainedSmallVectorDataSource::New(buckets.size(),
+                                                                    buckets.data());
+      _indicesCount = active;
+    }
+
+    instanceIndices = _instanceIndices;
+  }
+
+  if (instanceIndices) {
+    editor.Set(HdInstancerTopologySchema::GetDefaultLocator().Append(
+                   HdInstancerTopologySchemaTokens->instanceIndices),
+               instanceIndices);
+  }
 
   editor.Set(HdPrimvarsSchema::GetDefaultLocator().Append(
                  HdInstancerTokens->instanceTranslations),
@@ -137,17 +194,36 @@ SdfPathVector LatticeInstancerSceneIndex::GetChildPrimPaths(const SdfPath &primP
 
 void LatticeInstancerSceneIndex::Tick()
 {
-  if (!_latticeSource || !_latticeSource->drainDirty()) {
+  if (!_latticeSource) {
+    return;
+  }
+
+  const bool primvarsDirty = _latticeSource->drainDirty();
+  // instance indices live in the topology rather than the primvars, so a count
+  // change has to be published separately - dirtying the primvars alone would
+  // leave hydra drawing the previous number of instances.
+  const bool topologyDirty = _latticeSource->drainTopologyDirty();
+
+  if (!primvarsDirty && !topologyDirty) {
     return;
   }
 
   // one entry, however many instances moved. this is the whole
   // reason the instancer path scales where the per-prim path
   // does not.
-  static const HdDataSourceLocatorSet dirtyLocators{
-      HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceTranslations),
-      HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceScales),
-      HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceRotations)};
+  HdDataSourceLocatorSet dirtyLocators;
+  if (primvarsDirty) {
+    dirtyLocators.insert(
+        HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceTranslations));
+    dirtyLocators.insert(
+        HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceScales));
+    dirtyLocators.insert(
+        HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceRotations));
+  }
+  if (topologyDirty) {
+    dirtyLocators.insert(
+        HdInstancerTopologySchema::GetDefaultLocator().Append(HdInstancerTopologySchemaTokens->instanceIndices));
+  }
 
   HdSceneIndexObserver::DirtiedPrimEntries entries;
   entries.emplace_back(_latticeSource->getInstancerPath(), dirtyLocators);

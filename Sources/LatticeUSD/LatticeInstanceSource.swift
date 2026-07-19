@@ -92,6 +92,26 @@ public final class LatticeInstanceSource
   private let protectedBinding = Mutex<(base: UInt, count: Int)>((0, 0))
   private let protectedDirty = Mutex<Bool>(false)
 
+  /// How many of the bound instances are live.
+  ///
+  /// The column, the primvar arrays and the stage's authored `protoIndices` are
+  /// all sized once at startup, so this can only ever narrow that - it selects a prefix of the
+  /// field rather than resizing it. The scene index sizes its arrays to it and drops every
+  /// `instanceIndices` entry past it.
+  ///
+  /// `count` is what the UI has asked for and moves at any moment. `published` is what the
+  /// frame in flight is being served at, latched once per frame by ``drainTopologyDirty()``.
+  /// Reads from `GetPrim()` go through `published`, never `count`: Hydra pulls the instancer
+  /// topology and the instance primvars in *separate* `GetPrim()` calls, so serving the live
+  /// value would let the count move between them and leave `instanceIndices` addressing
+  /// instances the primvar arrays no longer have - which Storm's indirect draw then reads
+  /// straight off the end of the buffer.
+  ///
+  /// `topologyDirty` is separate from ``markDirty()`` because the index list lives in the
+  /// instancer topology, not in the primvars - it only needs republishing when the count
+  /// actually moves, not every frame.
+  private let protectedActive = Mutex<(count: Int, published: Int, topologyDirty: Bool)>((0, 0, false))
+
   /// The instancer prim whose primvars are overridden.
   public let instancerPath: SdfPath
 
@@ -147,6 +167,52 @@ public final class LatticeInstanceSource
   public func instanceCount() -> Int
   {
     protectedBinding.withLock { $0.count }
+  }
+
+  /// How many instances the frame in flight is being served at, clamped to what
+  /// is actually bound.
+  ///
+  /// Read from the scene index's `GetPrim()` to size the primvar arrays and
+  /// narrow `instanceIndices`. This is the latched value, not the live one -
+  /// see ``protectedActive``.
+  public func activeCount() -> Int
+  {
+    let bound = protectedBinding.withLock { $0.count }
+    let active = protectedActive.withLock { $0.published }
+    return active <= 0 ? bound : min(active, bound)
+  }
+
+  /// Whether the live count moved since it was last published, and the point at
+  /// which the frame's count is latched.
+  ///
+  /// Called once per frame from the scene index's `Tick()`, in the mutation
+  /// phase and before the read phase opens, so every `GetPrim()` that Hydra
+  /// makes against this frame sees one count. When it returns `true` the caller
+  /// adds the instancer topology to the dirty set - dirtying the primvars alone
+  /// would leave Hydra drawing the old count.
+  public func drainTopologyDirty() -> Bool
+  {
+    protectedActive.withLock
+    { state in
+      state.published = state.count
+      let was = state.topologyDirty
+      state.topologyDirty = false
+      return was
+    }
+  }
+
+  /// Narrows the field to its first `count` instances.
+  ///
+  /// Safe to call from the UI thread at any point in the frame: it only moves
+  /// the requested count, which nothing reads until the next latch.
+  public func setActiveCount(_ count: Int)
+  {
+    protectedActive.withLock
+    { state in
+      guard state.count != count else { return }
+      state.count = count
+      state.topologyDirty = true
+    }
   }
 
   // MARK: - Write path

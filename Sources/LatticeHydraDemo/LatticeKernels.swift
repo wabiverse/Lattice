@@ -70,7 +70,7 @@ public enum LatticeKernel: String, CaseIterable, Sendable
       case .ripple: "~20 flops"
       case .galaxy: "~40 flops"
       case .curl: "18 fbm, 3 octaves"
-      case .lorenz: "128 Euler steps"
+      case .lorenz: "up to 512 Euler steps"
       case .mandelbulb: "8 marches x 16 iters"
     }
   }
@@ -229,111 +229,162 @@ public enum LatticeKernel: String, CaseIterable, Sendable
                         const device RippleMotion *motions [[buffer(1)]],
                         constant float &t [[buffer(2)]],
                         constant uint &count [[buffer(3)]],
+                        constant float &compaction [[buffer(4)]],
+                        constant float &fieldExtent [[buffer(5)]],
                         uint id [[thread_position_in_grid]])
     {
       if (id >= count) { return; }
       const RippleMotion mo = motions[id];
 
-      const float wave = sin(mo.radius * 0.55f - t * 2.4f + mo.phase);
+      // frequency and lift are both fractions of the field, so the
+      // wave keeps its shape as --count changes the grid's physical
+      // size.
+      const float waveCycles = 6.0f;
+      const float radial = mo.radius / max(fieldExtent, 1e-3f);
+
+      const float wave = sin(radial * waveCycles * 6.2831853f - t * 2.4f + mo.phase);
       const float swell = 1.0f + wave * 0.06f;
       const float k = mo.scale * (1.0f + wave * 0.25f);
 
       float3 p = homeOf(mo) * swell;
-      p.y += wave * 1.35f;
+      p.y += wave * fieldExtent * 0.02f;
 
-      writeInstance(out[id], p, float3(k), float3(0,1,0), t * mo.spin + mo.phase);
+      writeInstance(out[id], p * compaction, float3(k), float3(0,1,0), t * mo.spin + mo.phase);
     }
 
     kernel void kGalaxy(device InstanceXform *out [[buffer(0)]],
                         const device RippleMotion *motions [[buffer(1)]],
                         constant float &t [[buffer(2)]],
                         constant uint &count [[buffer(3)]],
+                        constant float &compaction [[buffer(4)]],
+                        constant float &fieldExtent [[buffer(5)]],
                         uint id [[thread_position_in_grid]])
     {
       if (id >= count) { return; }
       const RippleMotion mo = motions[id];
       const float3 h = homeOf(mo);
 
+      // radius as a fraction of the field rather than in world units, so
+      // the shape holds when the instance count moves the grid's extent.
+      const float extent = max(fieldExtent, 1e-3f);
+      const float r = length(float2(h.x, h.z));
+      const float rn = r / extent;
+
       // inner shells orbit faster - the shear is what winds
       // an even grid into arms, the same way a real disc
       // galaxy gets them.
-      const float r = length(float2(h.x, h.z));
-      const float omega = 2.6f / (1.0f + r * 0.16f);
+      const float omega = 2.6f / (1.0f + rn * 10.9f);
       const float a = t * omega + mo.phase * 0.35f;
       const float ca = cos(a), sa = sin(a);
 
       float3 p = float3(h.x * ca - h.z * sa, h.y * 0.16f, h.x * sa + h.z * ca);
-      p.y += sin(r * 0.32f - t * 1.1f) * 1.8f;
+      p.y += sin(rn * 21.8f - t * 1.1f) * extent * 0.0264f;
 
-      const float k = mo.scale * (0.65f + 0.8f * exp(-r * 0.035f));
-      writeInstance(out[id], p, float3(k), float3(0,1,0), a);
+      const float k = mo.scale * (0.65f + 0.8f * exp(-rn * 2.39f));
+      writeInstance(out[id], p * compaction, float3(k), float3(0,1,0), a);
     }
 
     kernel void kCurl(device InstanceXform *out [[buffer(0)]],
                       const device RippleMotion *motions [[buffer(1)]],
                       constant float &t [[buffer(2)]],
                       constant uint &count [[buffer(3)]],
+                      constant float &compaction [[buffer(4)]],
+                      constant float &fieldExtent [[buffer(5)]],
                       uint id [[thread_position_in_grid]])
     {
       if (id >= count) { return; }
       const RippleMotion mo = motions[id];
       const float3 h = homeOf(mo);
 
-      // advecting the *sample point* with time rather than integrating the
-      // position keeps this stateless - the field drifts through the cubes
+      // normalized to the field.
+      const float3 n = h / max(fieldExtent, 1e-3f);
+
+      // advecting the sample point with time rather than integrating the
+      // position keeps this stateless, the field drifts through the cubes
       // instead of the cubes accumulating through the field.
-      const float3 sp = h * 0.045f + float3(0.0f, t * 0.10f, 0.0f);
+      const float3 sp = n * 2.6f + float3(0.0f, t * 0.10f, 0.0f);
       const float3 v = curlNoise(sp);
 
-      const float3 p = h + v * 9.0f;
+      // displacement is a fraction of the field, large enough to pull the
+      // cube apart into filaments rather than only ripple its surface.
+      const float3 p = h + v * fieldExtent * 0.42f;
       const float speed = length(v);
       const float k = mo.scale * (0.7f + 0.5f * clamp(speed, 0.0f, 2.0f));
 
-      writeInstance(out[id], p, float3(k), v, t * 0.7f + mo.phase);
+      writeInstance(out[id], p * compaction, float3(k), v, t * 0.7f + mo.phase);
     }
 
     kernel void kLorenz(device InstanceXform *out [[buffer(0)]],
                         const device RippleMotion *motions [[buffer(1)]],
                         constant float &t [[buffer(2)]],
                         constant uint &count [[buffer(3)]],
+                        constant float &compaction [[buffer(4)]],
+                        constant float &fieldExtent [[buffer(5)]],
                         uint id [[thread_position_in_grid]])
     {
       if (id >= count) { return; }
       const RippleMotion mo = motions[id];
 
-      // re-integrated from the home position every frame rather than carried
-      // forward, so the kernel stays a pure function of (motion, t) and can
-      // be switched away from and back to with no state to restore. it is also,
-      // deliberately, a hundred and twenty-eight sequential steps per instance.
-      float3 p = homeOf(mo) * 0.11f;
-      const float dt = 0.0055f + 0.0025f * sin(t * 0.22f);
+      // fixed seed radius, not grid-derived. the grid's extent follows the
+      // instance count, and deriving the seed from it made the attractor
+      // differ per count.
+      float3 p = normalize(homeOf(mo) + float3(1e-5f)) * (2.0f + mo.phase * 1.2f);
 
-      for (int i = 0; i < 128; ++i)
+      // keep dt constant. because the system is chaotic, changing the time step
+      // recalculates the trajectory and warps the entire cloud shape.
+      const float dt = 0.006f;
+
+      // rayleigh number, at its classic value. it also sets where the attractor
+      // sits, so the recentre and the scale below are derived from it rather
+      // than hardcoded.
+      const float rho = 28.0f;
+
+      const float flowSpeed = 14.0f;
+      const float cycle = fmod(mo.phase * (416.0f / 6.2831853f) + t * flowSpeed, 416.0f);
+      const int steps = 96 + int(cycle);
+
+      for (int i = 0; i < 512; ++i)
       {
+        if (i >= steps) { break; }
+
         const float dx = 10.0f * (p.y - p.x);
-        const float dy = p.x * (28.0f - p.z) - p.y;
+        const float dy = p.x * (rho - p.z) - p.y;
         const float dz = p.x * p.y - 2.6666667f * p.z;
         p += float3(dx, dy, dz) * dt;
         // lorenz is chaotic, a seed far off the attractor can take a very large
         // first step. clamping keeps a stray instance from reaching inf and then
         // NaN, which would silently drop it from the field.
-        p = clamp(p, -80.0f, 80.0f);
+        p = clamp(p, -150.0f, 150.0f);
       }
 
-      // the attractor lives around z in 0..50 - recenter it and lay it on its
-      // side so the butterfly faces the default camera.
-      float3 q = float3(p.x, p.z - 25.0f, p.y) * 1.35f;
+      // interpolate the partial step.
+      {
+        const float dx = 10.0f * (p.y - p.x);
+        const float dy = p.x * (rho - p.z) - p.y;
+        const float dz = p.x * p.y - 2.6666667f * p.z;
+        const float3 pNext = clamp(p + float3(dx, dy, dz) * dt, -150.0f, 150.0f);
+        p = mix(p, pNext, fract(cycle));
+      }
+
+      // the attractor climbs to about 2*rho in z and reaches roughly rho in x
+      // and y, so recentring on rho-1 and scaling by extent/rho lands it in the
+      // field at about the size of the other kernels fields, at any count.
+      const float lift = 0.55f;
+      float3 q = float3(p.x, (p.z - (rho - 1.0f)) * lift, p.y)
+               * (max(fieldExtent, 1e-3f) / rho);
       const float a = t * 0.22f;
       const float ca = cos(a), sa = sin(a);
       q = float3(q.x * ca - q.z * sa, q.y, q.x * sa + q.z * ca);
 
-      writeInstance(out[id], q, float3(mo.scale * 0.8f), float3(0,1,0), a + mo.phase);
+      writeInstance(out[id], q * compaction, float3(mo.scale * 0.8f), float3(0,1,0), a + mo.phase);
     }
 
     kernel void kMandelbulb(device InstanceXform *out [[buffer(0)]],
                             const device RippleMotion *motions [[buffer(1)]],
                             constant float &t [[buffer(2)]],
                             constant uint &count [[buffer(3)]],
+                            constant float &compaction [[buffer(4)]],
+                            constant float &fieldExtent [[buffer(5)]],
                             uint id [[thread_position_in_grid]])
     {
       if (id >= count) { return; }
@@ -377,10 +428,10 @@ public enum LatticeKernel: String, CaseIterable, Sendable
       // reads as solid.
       const float a = t * 0.3f;
       const float ca = cos(a), sa = sin(a);
-      const float3 s = dir * dist * 46.0f;
+      const float3 s = dir * dist * max(fieldExtent, 1e-3f) * 0.78f;
       const float3 p = float3(s.x * ca - s.z * sa, s.y, s.x * sa + s.z * ca);
 
-      writeInstance(out[id], p, float3(mo.scale * 0.8f), float3(0,1,0), a);
+      writeInstance(out[id], p * compaction, float3(mo.scale * 0.8f), float3(0,1,0), a);
     }
     """
 #endif
