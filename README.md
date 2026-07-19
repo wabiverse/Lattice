@@ -1,6 +1,8 @@
 # Lattice
 
-![Lattice driving 100,000 live transforms through a Hydra viewport](assets/preview.png)
+<p align="center">
+  <img width="640" height="474" alt="target" src="https://github.com/user-attachments/assets/b8a487a3-6aa8-40f3-9fcc-a223e2e08703" />
+</p>
 
 <p align="center">
   <sub>
