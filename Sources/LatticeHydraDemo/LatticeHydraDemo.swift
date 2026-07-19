@@ -138,7 +138,7 @@ struct LatticeHydraDemo: App
             {
               Text("\(String(format: "%.0f", stats.framesPerSecond)) fps")
                 .font(.system(size: 30, weight: .bold).monospaced())
-              Text("\(itemCount) \(itemNoun)")
+              Text("\(itemCount.formatted()) \(itemNoun)")
                 .font(.system(size: 12))
                 .foregroundColor(Color(white: 0.62))
 
