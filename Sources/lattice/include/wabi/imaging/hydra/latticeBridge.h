@@ -86,6 +86,32 @@ void LatticeHydraInstancerTick(void);
 /** The number of live ``LatticeInstancerSceneIndex`` instances. */
 size_t LatticeHydraLiveInstancerSceneIndexCount(void);
 
+/* ------------------------------------------------------------------------
+ * Aggregating path
+ *
+ * The instancer path above renders fast but its cubes are not individual
+ * prims, they are instance indices sharing a prototype. This registers the
+ * same instancer scene index over a stage that carries both a co-authored
+ * `UsdGeomPointInstancer` and N addressable leaf prims under `suppressPrefix`.
+ * The instancer draws the field at instancer speed, the leaf prims stay
+ * addressable and authorable but are hidden from the renderer, so the frame
+ * still dirties one prim. It reuses `LatticeHydraInstancerTick` and
+ * `LatticeHydraLiveInstancerSceneIndexCount`, only the registration differs.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Registers the aggregating variant of the instancer scene index.
+ *
+ * @param latticeSource An unmanaged pointer to the Swift ``LatticeInstanceSource``.
+ * @param suppressPrefix The root path of the addressable but not drawn leaf prims
+ *        (e.g. `/World/Cells`). Every prim under it is hidden from the renderer while still
+ *        staying present in the scene.
+ *
+ * @warning Same ordering rule: must run *before* the `UsdImagingGL.Engine` is
+ *          constructed.
+ */
+void LatticeHydraRegisterAggregatingSceneIndex(void *latticeSource, const char *suppressPrefix);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

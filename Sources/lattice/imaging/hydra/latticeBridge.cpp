@@ -238,3 +238,55 @@ size_t LatticeHydraLiveInstancerSceneIndexCount(void)
   _CompactInstancerLocked();
   return _liveInstancerSceneIndices->size();
 }
+
+// ---------------------------------------------------------------------------
+// Aggregating path
+//
+// Same scene index and source as the instancer path, so it reuses that path's
+// live list, tick and count. The only difference is the suppress prefix handed
+// to LatticeInstancerSceneIndex::New, which hides the addressable cells.
+// ---------------------------------------------------------------------------
+
+void LatticeHydraRegisterAggregatingSceneIndex(void *latticeSource, const char *suppressPrefix)
+{
+  if (!latticeSource) {
+    return;
+  }
+
+  const SdfPath prefix = (suppressPrefix && suppressPrefix[0]) ? SdfPath(suppressPrefix)
+                                                               : SdfPath();
+
+  {
+    std::lock_guard<std::mutex> lock(_Mutex());
+    if (_instanceSource) {
+      return;
+    }
+
+    _instanceSource = new std::unique_ptr<LatticeUSD::LatticeInstanceSource>(
+        new LatticeUSD::LatticeInstanceSource(
+            LatticeUSD::_impl::_impl_LatticeInstanceSource::makeRetained(latticeSource)));
+
+    _liveInstancerSceneIndices = new std::vector<LatticeInstancerSceneIndexPtr>();
+  }
+
+  HdSceneIndexPluginRegistry::GetInstance().RegisterSceneIndexForRenderer(
+      /* rendererDisplayName = */ std::string(),
+      [prefix](const std::string &renderInstanceId,
+               const HdSceneIndexBaseRefPtr &inputScene,
+               const HdContainerDataSourceHandle &inputArgs) -> HdSceneIndexBaseRefPtr {
+        std::lock_guard<std::mutex> lock(_Mutex());
+        if (!_instanceSource || !*_instanceSource) {
+          return inputScene;
+        }
+
+        LatticeInstancerSceneIndexRefPtr si = LatticeInstancerSceneIndex::New(
+            inputScene, _instanceSource->get(), prefix);
+        if (_liveInstancerSceneIndices) {
+          _liveInstancerSceneIndices->push_back(si);
+        }
+        return si;
+      },
+      /* inputArgs = */ nullptr,
+      /* insertionPhase = */ std::numeric_limits<HdSceneIndexPluginRegistry::InsertionPhase>::max(),
+      HdSceneIndexPluginRegistry::InsertionOrderAtEnd);
+}

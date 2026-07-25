@@ -63,15 +63,20 @@ HdContainerDataSourceHandle _InstancePrimvar(const HdDataSourceBaseHandle &value
 
 LatticeInstancerSceneIndexRefPtr LatticeInstancerSceneIndex::New(
     const HdSceneIndexBaseRefPtr &inputSceneIndex,
-    LatticeUSD::LatticeInstanceSource *latticeSource)
+    LatticeUSD::LatticeInstanceSource *latticeSource,
+    const SdfPath &suppressPrefix)
 {
-  return TfCreateRefPtr(new LatticeInstancerSceneIndex(inputSceneIndex, latticeSource));
+  return TfCreateRefPtr(
+      new LatticeInstancerSceneIndex(inputSceneIndex, latticeSource, suppressPrefix));
 }
 
 LatticeInstancerSceneIndex::LatticeInstancerSceneIndex(
     const HdSceneIndexBaseRefPtr &inputSceneIndex,
-    LatticeUSD::LatticeInstanceSource *latticeSource)
-    : HdSingleInputFilteringSceneIndexBase(inputSceneIndex), _latticeSource(latticeSource)
+    LatticeUSD::LatticeInstanceSource *latticeSource,
+    const SdfPath &suppressPrefix)
+    : HdSingleInputFilteringSceneIndexBase(inputSceneIndex),
+      _latticeSource(latticeSource),
+      _suppressPrefix(suppressPrefix)
 {}
 
 LatticeInstancerSceneIndex::~LatticeInstancerSceneIndex()
@@ -80,6 +85,18 @@ LatticeInstancerSceneIndex::~LatticeInstancerSceneIndex()
 HdSceneIndexPrim LatticeInstancerSceneIndex::GetPrim(const SdfPath &primPath) const
 {
   HdSceneIndexPrim prim = _GetInputSceneIndex()->GetPrim(primPath);
+
+  // aggregating path: a cell exists so its prim is addressable, authorable and
+  // pickable, but it is drawn through the instancer, not as its own rprim. clearing
+  // the type is what stops storm from syncing one rprim per cell, the whole cost the
+  // per-prim path pays and this one does not. the data source is left intact so the
+  // prim still answers queries.
+  if (!_suppressPrefix.IsEmpty() && primPath.HasPrefix(_suppressPrefix) &&
+      primPath != _suppressPrefix) {
+    prim.primType = TfToken();
+    return prim;
+  }
+
   if (!prim.dataSource || !_latticeSource) {
     return prim;
   }
@@ -233,7 +250,25 @@ void LatticeInstancerSceneIndex::Tick()
 void LatticeInstancerSceneIndex::_PrimsAdded(const HdSceneIndexBase &sender,
                                              const HdSceneIndexObserver::AddedPrimEntries &entries)
 {
-  _SendPrimsAdded(entries);
+  // initial population is pull-based through GetPrim, so the type-clearing there
+  // already hides the cells. this covers the push path too, a cell added after
+  // populate would otherwise reach the render index as a mesh before the first
+  // GetPrim, and briefly create the rprim this whole path exists to avoid.
+  if (_suppressPrefix.IsEmpty()) {
+    _SendPrimsAdded(entries);
+    return;
+  }
+
+  HdSceneIndexObserver::AddedPrimEntries rewritten;
+  rewritten.reserve(entries.size());
+  for (const auto &e : entries) {
+    if (e.primPath.HasPrefix(_suppressPrefix) && e.primPath != _suppressPrefix) {
+      rewritten.emplace_back(e.primPath, TfToken());
+    } else {
+      rewritten.push_back(e);
+    }
+  }
+  _SendPrimsAdded(rewritten);
 }
 
 void LatticeInstancerSceneIndex::_PrimsRemoved(

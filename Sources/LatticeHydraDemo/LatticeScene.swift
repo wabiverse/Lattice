@@ -197,14 +197,7 @@ public enum LatticeSceneBuilder
     
     let stage = UsdStage.open(url.path)
     
-    let domeLight = UsdLux.DomeLight.define(stage, path: "/World/DefaultDomeLight")
-    if let hdxResources = Bundle.hdx?.resourcePath {
-      let tex = "\(hdxResources)/textures/StinsonBeach.hdr"
-      if FileManager.default.fileExists(atPath: tex) {
-        let hdrAsset = Sdf.AssetPath(tex)
-        domeLight.createTextureFileAttr().set(hdrAsset)
-      }
-    }
+    AppUtils.addDomeLight(to: stage)
 
     return (stage, pathStrings.map { SdfPath($0) }, motions)
   }

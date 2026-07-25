@@ -88,7 +88,7 @@ struct LatticeHydraDemo: App
       liveCount = { Int(LatticeHydraLiveSceneIndexCount()) }
       print("[lattice] drive path: \(scene.drivePath.rawValue), scene: per-prim")
     }
-    else
+    else if AppUtils.usesInstancerPath()
     {
       let scene = LatticeInstancerSceneBuilder.build(instanceCount: count, useGPU: useGPU)
       stage = scene.stage
@@ -99,6 +99,25 @@ struct LatticeHydraDemo: App
       driver = LatticeInstancerDriver(scene: scene)
       liveCount = { Int(LatticeHydraLiveInstancerSceneIndexCount()) }
       print("[lattice] drive path: \(scene.drivePath.rawValue), scene: instancer")
+    }
+    else
+    {
+      // the default: individually addressable cells, drawn as one instancer.
+      let scene = LatticeAggregateSceneBuilder.build(instanceCount: count, useGPU: useGPU)
+      stage = scene.stage
+      itemCount = scene.instanceCount
+      itemNoun = "cells (aggregated)"
+
+      // same source and driver as the instancer path, the only difference is the
+      // suppress prefix, which hides the addressable cells from the renderer while
+      // the co-authored instancer draws the field.
+      LatticeHydraRegisterAggregatingSceneIndex(
+        Unmanaged.passRetained(scene.source).toOpaque(),
+        LatticeAggregateSceneBuilder.cellsPath
+      )
+      driver = LatticeInstancerDriver(scene: scene)
+      liveCount = { Int(LatticeHydraLiveInstancerSceneIndexCount()) }
+      print("[lattice] drive path: \(scene.drivePath.rawValue), scene: aggregate")
     }
 
     let buildMs = (CFAbsoluteTimeGetCurrent() - buildStart) * 1000.0
@@ -115,6 +134,29 @@ struct LatticeHydraDemo: App
       Tf.Token("domeLightCameraVisibility"),
       VtValue(false)
     )
+
+    // a click resolves to the cell behind the hit instance, which is the whole
+    // point of the aggregating path: the field draws as one instancer, but a
+    // pick still lands on an individually addressable prim.
+    let aggregate = AppUtils.usesAggregatePath()
+    self.hydra.onPick = { result in
+      guard let result
+      else { return print("[lattice] pick: miss") }
+
+      if aggregate, result.isInstance
+      {
+        let cell = LatticeAggregateSceneBuilder.cellPath(forInstance: result.instanceIndex)
+        print("[lattice] pick: \(cell)  (instance \(result.instanceIndex))")
+      }
+      else if result.isInstance
+      {
+        print("[lattice] pick: instance \(result.instanceIndex) of \(result.instancerPath)")
+      }
+      else
+      {
+        print("[lattice] pick: \(result.primPath)")
+      }
+    }
 
     let live = liveCount()
     print("[lattice] scene index live on \(live) render index(es)")
@@ -210,6 +252,7 @@ struct LatticeHydraDemo: App
               Toggle("Notify", isOn: $notifies.onChange { on in
                 driver.notifiesHydra = on
               })
+              .font(.system(size: 12))
               .toggleStyle(.switch)
             }
             .padding(14)

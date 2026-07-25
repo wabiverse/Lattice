@@ -134,6 +134,24 @@ public enum AppUtils
       || ProcessInfo.processInfo.environment["LATTICE_PER_PRIM"] == "1"
   }
 
+  /// The aggregating scene shape, N individually addressable cube prims
+  /// drawn through one co-authored instancer. It keeps the per-prim path's
+  /// addressable prims at the instancer path's per-frame cost, because the
+  /// cells are hidden from the renderer and the field is drawn as a single
+  /// instancer. `--per-prim` and `--instancer` select the other two.
+  public static func usesAggregatePath() -> Bool
+  {
+    !usesPerPrimPath() && !usesInstancerPath()
+  }
+
+  /// Selects the plain instancer scene, one `UsdGeomPointInstancer`,
+  /// no addressable per-cell prims.
+  public static func usesInstancerPath() -> Bool
+  {
+    CommandLine.arguments.contains("--instancer")
+      || ProcessInfo.processInfo.environment["LATTICE_INSTANCER"] == "1"
+  }
+
   /// Forces the parallel-CPU path even where Metal is available, so the two can
   /// be compared back to back on stage.
   public static func forcesCPUPath() -> Bool

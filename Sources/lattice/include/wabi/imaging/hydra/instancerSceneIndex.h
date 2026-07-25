@@ -51,8 +51,14 @@ TF_DECLARE_WEAK_AND_REF_PTRS(LatticeInstancerSceneIndex);
 /// `InstanceXform` column directly.
 class LatticeInstancerSceneIndex : public HdSingleInputFilteringSceneIndexBase {
  public:
+  /// `suppressPrefix`, when non-empty, is the root of the addressable but not
+  /// drawn cells, every prim under it has its type cleared so Storm makes no rprim
+  /// for it, while it stays present and queryable in the tree. This is what lets the
+  /// aggregating path keep N individually addressable prims while drawing them all
+  /// through the single co-authored instancer.
   static LatticeInstancerSceneIndexRefPtr New(const HdSceneIndexBaseRefPtr &inputSceneIndex,
-                                              LatticeUSD::LatticeInstanceSource *latticeSource);
+                                              LatticeUSD::LatticeInstanceSource *latticeSource,
+                                              const SdfPath &suppressPrefix = SdfPath());
 
   HdSceneIndexPrim GetPrim(const SdfPath &primPath) const override;
 
@@ -64,7 +70,8 @@ class LatticeInstancerSceneIndex : public HdSingleInputFilteringSceneIndexBase {
 
  protected:
   LatticeInstancerSceneIndex(const HdSceneIndexBaseRefPtr &inputSceneIndex,
-                             LatticeUSD::LatticeInstanceSource *latticeSource);
+                             LatticeUSD::LatticeInstanceSource *latticeSource,
+                             const SdfPath &suppressPrefix);
 
   ~LatticeInstancerSceneIndex();
 
@@ -79,6 +86,10 @@ class LatticeInstancerSceneIndex : public HdSingleInputFilteringSceneIndexBase {
 
  private:
   LatticeUSD::LatticeInstanceSource *_latticeSource;
+
+  /// Root of the addressable cells to hide from the renderer. Empty on the
+  /// plain instancer path, set on the aggregating path.
+  SdfPath _suppressPrefix;
 
   /// Instance indices narrowed to the live count, cached on that count.
   ///
