@@ -56,6 +56,19 @@ public struct InstanceXform: LatticeComponent, Equatable, Sendable
   )
 }
 
+/// One instance's opacity, in its own single `Float` column.
+///
+/// Kept apart from ``InstanceXform`` so the scene index can publish an
+/// instance rate `displayOpacity` primvar (fading individual instances
+/// without touching their prototype's color).
+public struct InstanceOpacity: LatticeComponent, Equatable, Sendable
+{
+  public var a: Float
+  public init(a: Float) { self.a = a }
+
+  public static let opaque = InstanceOpacity(a: 1)
+}
+
 /// The live, app-owned instance buffer that ``LatticeInstancerSceneIndex``
 /// reads through when Hydra pulls the instancer prim.
 ///
@@ -91,6 +104,11 @@ public final class LatticeInstanceSource
   /// not the pointer's type.
   private let protectedBinding = Mutex<(base: UInt, count: Int)>((0, 0))
   private let protectedDirty = Mutex<Bool>(false)
+
+  /// Optional base of a per instance ``InstanceOpacity`` column (one `Float` each).
+  /// Zero when no opacity column is bound, in which case the scene index publishes
+  /// no `displayOpacity` and instances render fully opaque.
+  private let protectedOpacity = Mutex<UInt>(0)
 
   /// How many of the bound instances are live.
   ///
@@ -136,6 +154,15 @@ public final class LatticeInstanceSource
     }
   }
 
+  /// Points the source at the optional per instance opacity column, sized to
+  /// the same instance count as ``bind(base:count:)``. Pass `nil` to publish
+  /// no `displayOpacity` (the default).
+  public func bindOpacity(base: UnsafeRawPointer?)
+  {
+    let address = UInt(bitPattern: base)
+    protectedOpacity.withLock { $0 = address }
+  }
+
   // MARK: - Frame phase
 
   public func beginReadPhase()
@@ -167,6 +194,18 @@ public final class LatticeInstanceSource
   public func instanceCount() -> Int
   {
     protectedBinding.withLock { $0.count }
+  }
+
+  /// Base address of the per instance opacity column, or `nil` if none is bound.
+  /// Read from `GetPrim()` in the read phase, strided as one `Float` per instance,
+  /// exactly like ``instanceBase()``.
+  public func opacityBase() -> UnsafeRawPointer?
+  {
+    assert(framePhase.current == .readable,
+           "GetPrim() pulled outside the read phase - the store may be mutating concurrently.")
+
+    let address = protectedOpacity.withLock { $0 }
+    return UnsafeRawPointer(bitPattern: address)
   }
 
   /// How many instances the frame in flight is being served at, clamped to what

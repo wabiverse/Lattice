@@ -200,6 +200,19 @@ HdSceneIndexPrim LatticeInstancerSceneIndex::GetPrim(const SdfPath &primPath) co
              _InstancePrimvar(HdRetainedTypedSampledDataSource<VtQuatfArray>::New(rotations),
                               TfToken()));
 
+  // optional per instance opacity -> an instance rate `displayOpacity`
+  // primvar, only published when a scene binds an opacity column.
+  if (const void *opacityBase = _latticeSource->opacityBase()) {
+    const float *o = static_cast<const float *>(opacityBase);
+    VtFloatArray opacities(active);
+    for (size_t i = 0; i < active; ++i) {
+      opacities[i] = o[i];
+    }
+    editor.Set(HdPrimvarsSchema::GetDefaultLocator().Append(HdTokens->displayOpacity),
+               _InstancePrimvar(HdRetainedTypedSampledDataSource<VtFloatArray>::New(opacities),
+                                TfToken()));
+  }
+
   prim.dataSource = editor.Finish();
   return prim;
 }
@@ -236,6 +249,8 @@ void LatticeInstancerSceneIndex::Tick()
         HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceScales));
     dirtyLocators.insert(
         HdPrimvarsSchema::GetDefaultLocator().Append(HdInstancerTokens->instanceRotations));
+    dirtyLocators.insert(
+        HdPrimvarsSchema::GetDefaultLocator().Append(HdTokens->displayOpacity));
   }
   if (topologyDirty) {
     dirtyLocators.insert(

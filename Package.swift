@@ -20,7 +20,7 @@ let package = Package(
     .executable(name: "LatticeHydraDemo", targets: ["LatticeHydraDemo"])
   ],
   dependencies: [
-    .package(url: "https://github.com/wabiverse/swift-usd.git", from: "26.8.3"),
+    .package(url: "https://github.com/wabiverse/swift-usd.git", from: "26.9.4"),
     .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.5.0"),
   ],
   targets: [
@@ -44,7 +44,7 @@ let package = Package(
     .target(
       name: "LatticeOverlays",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .product(name: "HydraKit", package: "swift-usd"),
       ],
       swiftSettings: [
         .interoperabilityMode(.Cxx)
@@ -54,7 +54,7 @@ let package = Package(
     .target(
       name: "LatticeUSD",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeOverlays"),
         .target(name: "LatticeCore")
       ],
@@ -69,7 +69,7 @@ let package = Package(
     .target(
       name: "lattice",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeCore"),
         .target(name: "LatticeMetal"),
         .target(name: "LatticeUSD")
@@ -79,7 +79,7 @@ let package = Package(
     .executableTarget(
       name: "LatticeDemo",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeCore"),
         .target(name: "LatticeMetal"),
         .target(name: "LatticeUSD"),
@@ -96,7 +96,6 @@ let package = Package(
     .executableTarget(
       name: "LatticeHydraDemo",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
         .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeCore"),
         .target(name: "LatticeMetal"),
@@ -127,7 +126,7 @@ let package = Package(
     .testTarget(
       name: "LatticeUSDTests",
       dependencies: [
-        .product(name: "OpenUSDKit", package: "swift-usd"),
+        .product(name: "HydraKit", package: "swift-usd"),
         .target(name: "LatticeCore"),
         .target(name: "LatticeUSD")
       ],

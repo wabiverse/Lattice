@@ -180,7 +180,11 @@ public final class USDStageSource: USDStageSourceRepresentable
       case "asset":
         var value = Sdf.AssetPath()
         guard attribute.Get(&value, time) else { return nil }
+        #if compiler(>=6.4)
+        return .string(String(value.GetAssetPathConsuming()))
+        #else
         return .string(String(value.GetAssetPath()))
+        #endif
 
       case "float2", "texCoord2f":
         var value = GfVec2f()
