@@ -1,5 +1,7 @@
 #include "LatticeOverlays/ocioOverlay.h"
 
+#if __has_include(<OpenColorIO/OpenColorIO.h>)
+
 #include <memory>
 #include <string>
 #include <sstream>
@@ -39,3 +41,5 @@ std::string GetOCIOConfigSummary(std::shared_ptr<const OCIO::Config> configPtr) 
   return ss.str();
 }
 } // namespace Overlay
+
+#endif // __has_include(<OpenColorIO/OpenColorIO.h>)

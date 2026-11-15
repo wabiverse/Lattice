@@ -13,20 +13,29 @@
 #ifndef __WABI_IMAGING_HYDRA_SCENE_INDEX_H__
 #define __WABI_IMAGING_HYDRA_SCENE_INDEX_H__
 
-#include <pxr/pxrns.h>
-
-#include <Tf/declarePtrs.h>
-#include <Tf/refPtr.h>
-
-#include <Gf/matrix4d.h>
-
-#include <Sdf/path.h>
-#include <Usd/stage.h>
-
-#include <Hd/containerDataSourceEditor.h>
-#include <Hd/filteringSceneIndex.h>
-#include <Hd/retainedDataSource.h>
-#include <Hd/xformSchema.h>
+#if __has_include(<pxr/pxrns.h>)
+# include <pxr/pxrns.h>
+# include <Tf/declarePtrs.h>
+# include <Tf/refPtr.h>
+# include <Gf/matrix4d.h>
+# include <Sdf/path.h>
+# include <Usd/stage.h>
+# include <Hd/containerDataSourceEditor.h>
+# include <Hd/filteringSceneIndex.h>
+# include <Hd/retainedDataSource.h>
+# include <Hd/xformSchema.h>
+#else
+# include <pxr/pxr.h>
+# include <pxr/base/tf/declarePtrs.h>
+# include <pxr/base/tf/refPtr.h>
+# include <pxr/base/gf/matrix4d.h>
+# include <pxr/usd/sdf/path.h>
+# include <pxr/usd/usd/stage.h>
+# include <pxr/imaging/hd/containerDataSourceEditor.h>
+# include <pxr/imaging/hd/filteringSceneIndex.h>
+# include <pxr/imaging/hd/retainedDataSource.h>
+# include <pxr/imaging/hd/xformSchema.h>
+#endif
 
 #include "wabi/core/lattice.h"
 #include "wabi/gpu/metal.h"

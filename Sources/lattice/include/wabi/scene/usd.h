@@ -4502,7 +4502,7 @@ struct LatticeUSD_USDPopulationSyncNested_PrefetchStats {
   _Alignas(8) char _storage[24];
 };
 
-SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(Pixar::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
+SWIFT_EXTERN void * _Nonnull $s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(PXR_NS::UsdStage *_Nonnull stage, SWIFT_CONTEXT void * _Nonnull _self) SWIFT_NOEXCEPT SWIFT_CALL; // init(stage:)
 // Stub struct to be used to pass/return values to/from Swift functions.
 struct swift_interop_passStub_LatticeUSD_uint64_t_0_8_void_ptr_8_16 {
   uint64_t _1;
@@ -4962,16 +4962,16 @@ namespace swift SWIFT_PRIVATE_ATTR {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 template<>
-inline const constexpr bool isUsableInGenericContext<Pixar::GfMatrix4d> = true;
+inline const constexpr bool isUsableInGenericContext<PXR_NS::GfMatrix4d> = true;
 template<>
-struct TypeMetadataTrait<Pixar::GfMatrix4d> {
+struct TypeMetadataTrait<PXR_NS::GfMatrix4d> {
   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
     return LatticeUSD::_impl::$sSo5PixarO10GfMatrix4dVMa(0)._0;
   }
 };
 namespace _impl{
 template<>
-inline const constexpr bool isSwiftBridgedCxxRecord<Pixar::GfMatrix4d> = true;
+inline const constexpr bool isSwiftBridgedCxxRecord<PXR_NS::GfMatrix4d> = true;
 } // namespace
 #pragma clang diagnostic pop
 } // namespace swift
@@ -5067,7 +5067,7 @@ public:
   static SWIFT_INLINE_THUNK LatticeDouble4x4 init(double m00, double m01, double m02, double m03, double m10, double m11, double m12, double m13, double m20, double m21, double m22, double m23, double m30, double m31, double m32, double m33) SWIFT_SYMBOL("s:10LatticeUSD0A9Double4x4VyACSd_S15dtcfc");
   static SWIFT_INLINE_THUNK LatticeDouble4x4 getIdentity() SWIFT_SYMBOL("s:10LatticeUSD0A9Double4x4V8identityACvpZ");
   SWIFT_INLINE_THUNK swift::Int getHashValue() const SWIFT_SYMBOL("s:10LatticeUSD0A9Double4x4V9hashValueSivp");
-  SWIFT_INLINE_THUNK Pixar::GfMatrix4d getAsGfMatrix4d() const SWIFT_SYMBOL("s:10LatticeUSD0A9Double4x4V12asGfMatrix4dSo5PixarO0eF0Vvp");
+  SWIFT_INLINE_THUNK PXR_NS::GfMatrix4d getAsGfMatrix4d() const SWIFT_SYMBOL("s:10LatticeUSD0A9Double4x4V12asGfMatrix4dSo5PixarO0eF0Vvp");
 private:
   SWIFT_INLINE_THUNK LatticeDouble4x4() noexcept {}
   static SWIFT_INLINE_THUNK LatticeDouble4x4 _make() noexcept { return LatticeDouble4x4(); }
@@ -5610,7 +5610,7 @@ public:
   SWIFT_INLINE_THUNK void setM33(float value) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V3m33Sfvp");
   static SWIFT_INLINE_THUNK LatticeFloat4x4 init(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4VyACSf_S15ftcfc");
   static SWIFT_INLINE_THUNK LatticeFloat4x4 getIdentity() SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V8identityACvpZ");
-  SWIFT_INLINE_THUNK Pixar::GfMatrix4d getAsGfMatrix4d() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvp");
+  SWIFT_INLINE_THUNK PXR_NS::GfMatrix4d getAsGfMatrix4d() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvp");
   SWIFT_INLINE_THUNK swift::Int getHashValue() const SWIFT_SYMBOL("s:10LatticeUSD0A8Float4x4V9hashValueSivp");
 private:
   SWIFT_INLINE_THUNK LatticeFloat4x4() noexcept {}
@@ -5692,16 +5692,16 @@ namespace swift SWIFT_PRIVATE_ATTR {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 template<>
-inline const constexpr bool isUsableInGenericContext<Pixar::SdfPath> = true;
+inline const constexpr bool isUsableInGenericContext<PXR_NS::SdfPath> = true;
 template<>
-struct TypeMetadataTrait<Pixar::SdfPath> {
+struct TypeMetadataTrait<PXR_NS::SdfPath> {
   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
     return LatticeUSD::_impl::$sSo5PixarO7SdfPathVMa(0)._0;
   }
 };
 namespace _impl{
 template<>
-inline const constexpr bool isSwiftBridgedCxxRecord<Pixar::SdfPath> = true;
+inline const constexpr bool isSwiftBridgedCxxRecord<PXR_NS::SdfPath> = true;
 } // namespace
 #pragma clang diagnostic pop
 } // namespace swift
@@ -5745,8 +5745,8 @@ class SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC") LatticeInstanceSource fi
 public:
   using RefCountedClass::RefCountedClass;
   using RefCountedClass::operator=;
-  SWIFT_INLINE_THUNK Pixar::SdfPath getInstancerPath() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvp");
-  static SWIFT_INLINE_THUNK LatticeInstanceSource init(const LatticeCore::LatticeStore& store, const Pixar::SdfPath& instancerPath) SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0Vtcfc");
+  SWIFT_INLINE_THUNK PXR_NS::SdfPath getInstancerPath() SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvp");
+  static SWIFT_INLINE_THUNK LatticeInstanceSource init(const LatticeCore::LatticeStore& store, const PXR_NS::SdfPath& instancerPath) SWIFT_SYMBOL("s:10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0Vtcfc");
 /// Points the source at the column the kernel writes.
 /// Separate from <code>init</code> because the column only exists after the store is
 /// populated, and its <code>MTLBuffer</code> only after the Metal path is confirmed.
@@ -5847,16 +5847,16 @@ namespace swift SWIFT_PRIVATE_ATTR {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 template<>
-inline const constexpr bool isUsableInGenericContext<Pixar::SdfPathVector> = true;
+inline const constexpr bool isUsableInGenericContext<PXR_NS::SdfPathVector> = true;
 template<>
-struct TypeMetadataTrait<Pixar::SdfPathVector> {
+struct TypeMetadataTrait<PXR_NS::SdfPathVector> {
   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
     return LatticeUSD::_impl::$sSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVMa(0)._0;
   }
 };
 namespace _impl{
 template<>
-inline const constexpr bool isSwiftBridgedCxxRecord<Pixar::SdfPathVector> = true;
+inline const constexpr bool isSwiftBridgedCxxRecord<PXR_NS::SdfPathVector> = true;
 } // namespace
 #pragma clang diagnostic pop
 } // namespace swift
@@ -5925,7 +5925,7 @@ public:
 /// A CPU-driven scene pays one extra failed column lookup per prim for the
 /// <code>XformGPU</code> miss. That is the deliberate trade - the GPU path is the fast
 /// path, so it gets the single lookup.
-  SWIFT_INLINE_THUNK swift::Optional<Pixar::GfMatrix4d> getLiveXform(const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF");
+  SWIFT_INLINE_THUNK swift::Optional<PXR_NS::GfMatrix4d> getLiveXform(const PXR_NS::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF");
 /// A boolean-based alternative to <code>getLiveXform(_:)</code> to bypass a Swift -> C++
 /// interoperability linker bug.
 /// warning:
@@ -5944,19 +5944,19 @@ public:
 ///
 /// returns:
 /// <code>true</code> if a live transform was found and written.
-  SWIFT_INLINE_THUNK bool didGetLiveXform(Pixar::GfMatrix4d& outMatrix, const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF");
+  SWIFT_INLINE_THUNK bool didGetLiveXform(PXR_NS::GfMatrix4d& outMatrix, const PXR_NS::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF");
 /// Called by whatever drives per-frame mutation whenever a prim’s xform
 /// changes this frame.
 /// The lock here is not redundant with the phase assertion: mutation may
 /// run on the parallel CPU path or from a GPU completion handler, so several
 /// threads can push concurrently <em>within</em> the mutable phase. The phase
 /// guards an ordering; this lock guards the structure.
-  SWIFT_INLINE_THUNK void markDirty(const Pixar::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF");
+  SWIFT_INLINE_THUNK void markDirty(const PXR_NS::SdfPath& path) SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF");
 /// Call after each frame’s mutation pass, before asking the scene index to
 /// notify. Drains and returns everything touched this tick.
 /// Must run <em>before</em> <code>beginReadPhase()</code>, since it clears the dirty
 /// set that the frame’s notifications are built from.
-  SWIFT_INLINE_THUNK std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> drainDirtiedPaths() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF");
+  SWIFT_INLINE_THUNK std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>> drainDirtiedPaths() SWIFT_SYMBOL("s:10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF");
 protected:
   SWIFT_INLINE_THUNK LatticeXformSource(void * _Nonnull ptr) noexcept : RefCountedClass(ptr) {}
 private:
@@ -6400,16 +6400,16 @@ namespace swift SWIFT_PRIVATE_ATTR {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 template<>
-inline const constexpr bool isUsableInGenericContext<Pixar::UsdStage*> = true;
+inline const constexpr bool isUsableInGenericContext<PXR_NS::UsdStage*> = true;
 template<>
-struct SWIFT_AVAILABILITY(macos,introduced=13.3.0) TypeMetadataTrait<Pixar::UsdStage*> {
+struct SWIFT_AVAILABILITY(macos,introduced=13.3.0) TypeMetadataTrait<PXR_NS::UsdStage*> {
   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
     return LatticeUSD::_impl::$sSo5PixarO8UsdStageVMa(0)._0;
   }
 };
 namespace _impl{
 template<>
-inline const constexpr bool isSwiftBridgedCxxRecord<Pixar::UsdStage> = true;
+inline const constexpr bool isSwiftBridgedCxxRecord<PXR_NS::UsdStage> = true;
 } // namespace
 #pragma clang diagnostic pop
 } // namespace swift
@@ -6453,7 +6453,7 @@ public:
   using RefCountedClass::operator=;
 /// Wraps an already-opened stage. Use this when the caller owns stage
 /// lifetime (e.g. it also drives editing or rendering from the same stage).
-  static SWIFT_INLINE_THUNK USDStageSource init(Pixar::UsdStage *_Nonnull stage) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfc");
+  static SWIFT_INLINE_THUNK USDStageSource init(PXR_NS::UsdStage *_Nonnull stage) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfc");
 /// A stable key for <code>path</code>, agreeing with the key the runtime read path uses.
 /// For an OpenUSD binding: <code>SdfPath(path).GetHash()</code>.
   SWIFT_INLINE_THUNK swift::Int lookupKey(const swift::String& path) SWIFT_SYMBOL("s:10LatticeUSD14USDStageSourceC9lookupKey3forSiSS_tF");
@@ -6984,9 +6984,9 @@ namespace LatticeUSD SWIFT_PRIVATE_ATTR SWIFT_SYMBOL_MODULE("LatticeUSD") {
   SWIFT_INLINE_THUNK swift::Int LatticeDouble4x4::getHashValue() const {
   return LatticeUSD::_impl::$s10LatticeUSD0A9Double4x4V9hashValueSivg(_getOpaquePointer());
   }
-  SWIFT_INLINE_THUNK Pixar::GfMatrix4d LatticeDouble4x4::getAsGfMatrix4d() const {
-alignas(alignof(Pixar::GfMatrix4d)) char storage[sizeof(Pixar::GfMatrix4d)];
-auto * _Nonnull storageObjectPtr = reinterpret_cast<Pixar::GfMatrix4d *>(storage);
+  SWIFT_INLINE_THUNK PXR_NS::GfMatrix4d LatticeDouble4x4::getAsGfMatrix4d() const {
+alignas(alignof(PXR_NS::GfMatrix4d)) char storage[sizeof(PXR_NS::GfMatrix4d)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<PXR_NS::GfMatrix4d *>(storage);
 LatticeUSD::_impl::$s10LatticeUSD0A9Double4x4V12asGfMatrix4dSo5PixarO0eF0Vvg(storage, _getOpaquePointer());
 return *storageObjectPtr;
   }
@@ -7174,30 +7174,30 @@ return *storageObjectPtr;
     LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V8identityACvgZ(result);
   });
   }
-  SWIFT_INLINE_THUNK Pixar::GfMatrix4d LatticeFloat4x4::getAsGfMatrix4d() const {
-alignas(alignof(Pixar::GfMatrix4d)) char storage[sizeof(Pixar::GfMatrix4d)];
-auto * _Nonnull storageObjectPtr = reinterpret_cast<Pixar::GfMatrix4d *>(storage);
+  SWIFT_INLINE_THUNK PXR_NS::GfMatrix4d LatticeFloat4x4::getAsGfMatrix4d() const {
+alignas(alignof(PXR_NS::GfMatrix4d)) char storage[sizeof(PXR_NS::GfMatrix4d)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<PXR_NS::GfMatrix4d *>(storage);
 LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V12asGfMatrix4dSo5PixarO0eF0Vvg(storage, _getOpaquePointer());
 return *storageObjectPtr;
   }
   SWIFT_INLINE_THUNK swift::Int LatticeFloat4x4::getHashValue() const {
   return LatticeUSD::_impl::$s10LatticeUSD0A8Float4x4V9hashValueSivg(_getOpaquePointer());
   }
-  SWIFT_INLINE_THUNK Pixar::SdfPath LatticeInstanceSource::getInstancerPath() {
-alignas(alignof(Pixar::SdfPath)) char storage[sizeof(Pixar::SdfPath)];
-auto * _Nonnull storageObjectPtr = reinterpret_cast<Pixar::SdfPath *>(storage);
+  SWIFT_INLINE_THUNK PXR_NS::SdfPath LatticeInstanceSource::getInstancerPath() {
+alignas(alignof(PXR_NS::SdfPath)) char storage[sizeof(PXR_NS::SdfPath)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<PXR_NS::SdfPath *>(storage);
 LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC13instancerPathSo5PixarO03SdfF0Vvg(storage, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
-Pixar::SdfPath result(static_cast<Pixar::SdfPath &&>(*storageObjectPtr));
+PXR_NS::SdfPath result(static_cast<PXR_NS::SdfPath &&>(*storageObjectPtr));
 storageObjectPtr->~SdfPath();
 return result;
   }
-  SWIFT_INLINE_THUNK LatticeInstanceSource LatticeInstanceSource::init(const LatticeCore::LatticeStore& store, const Pixar::SdfPath& instancerPath) {
+  SWIFT_INLINE_THUNK LatticeInstanceSource LatticeInstanceSource::init(const LatticeCore::LatticeStore& store, const PXR_NS::SdfPath& instancerPath) {
   alignas(alignof(LatticeCore::LatticeStore)) char copyBuffer_consumedParamCopy_store[sizeof(LatticeCore::LatticeStore)];
   auto &consumedParamCopy_store = *(new(copyBuffer_consumedParamCopy_store) LatticeCore::LatticeStore(store));
   swift::_impl::ConsumedValueStorageDestroyer<LatticeCore::LatticeStore> storageGuard_consumedParamCopy_store(consumedParamCopy_store);
-  alignas(alignof(Pixar::SdfPath)) char copyBuffer_consumedParamCopy_instancerPath[sizeof(Pixar::SdfPath)];
-  auto &consumedParamCopy_instancerPath = *(new(copyBuffer_consumedParamCopy_instancerPath) Pixar::SdfPath(instancerPath));
-  swift::_impl::ConsumedValueStorageDestroyer<Pixar::SdfPath> storageGuard_consumedParamCopy_instancerPath(consumedParamCopy_instancerPath);
+  alignas(alignof(PXR_NS::SdfPath)) char copyBuffer_consumedParamCopy_instancerPath[sizeof(PXR_NS::SdfPath)];
+  auto &consumedParamCopy_instancerPath = *(new(copyBuffer_consumedParamCopy_instancerPath) PXR_NS::SdfPath(instancerPath));
+  swift::_impl::ConsumedValueStorageDestroyer<PXR_NS::SdfPath> storageGuard_consumedParamCopy_instancerPath(consumedParamCopy_instancerPath);
   return _impl::_impl_LatticeInstanceSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD0A14InstanceSourceC5store13instancerPathAC0A4Core0A5StoreC_So5PixarO03SdfG0VtcfC(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(consumedParamCopy_store), swift::_impl::getOpaquePointer(consumedParamCopy_instancerPath), swift::TypeMetadataTrait<LatticeInstanceSource>::getTypeMetadata()));
   }
   SWIFT_INLINE_THUNK void LatticeInstanceSource::bind(void const * _Nullable base, swift::Int count) {
@@ -7251,22 +7251,22 @@ return result;
   SWIFT_INLINE_THUNK void LatticeXformSource::endReadPhase() {
   LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC12endReadPhaseyyF(::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
-  SWIFT_INLINE_THUNK swift::Optional<Pixar::GfMatrix4d> LatticeXformSource::getLiveXform(const Pixar::SdfPath& path) {
-  return swift::_impl::_impl_Optional<Pixar::GfMatrix4d>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
+  SWIFT_INLINE_THUNK swift::Optional<PXR_NS::GfMatrix4d> LatticeXformSource::getLiveXform(const PXR_NS::SdfPath& path) {
+  return swift::_impl::_impl_Optional<PXR_NS::GfMatrix4d>::returnNewValue([&](char * _Nonnull result) SWIFT_INLINE_THUNK_ATTRIBUTES {
     LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC07getLiveC0ySo5PixarO10GfMatrix4dVSgAF7SdfPathVF(result, swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   });
   }
-  SWIFT_INLINE_THUNK bool LatticeXformSource::didGetLiveXform(Pixar::GfMatrix4d& outMatrix, const Pixar::SdfPath& path) {
+  SWIFT_INLINE_THUNK bool LatticeXformSource::didGetLiveXform(PXR_NS::GfMatrix4d& outMatrix, const PXR_NS::SdfPath& path) {
   return LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC010didGetLiveC0ySbSo5PixarO10GfMatrix4dVz_AF7SdfPathVtF(swift::_impl::getOpaquePointer(outMatrix), swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
-  SWIFT_INLINE_THUNK void LatticeXformSource::markDirty(const Pixar::SdfPath& path) {
+  SWIFT_INLINE_THUNK void LatticeXformSource::markDirty(const PXR_NS::SdfPath& path) {
   LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC9markDirtyyySo5PixarO7SdfPathVF(swift::_impl::getOpaquePointer(path), ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
   }
-  SWIFT_INLINE_THUNK std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> LatticeXformSource::drainDirtiedPaths() {
-alignas(alignof(std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>>)) char storage[sizeof(std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>>)];
-auto * _Nonnull storageObjectPtr = reinterpret_cast<std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> *>(storage);
+  SWIFT_INLINE_THUNK std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>> LatticeXformSource::drainDirtiedPaths() {
+alignas(alignof(std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>>)) char storage[sizeof(std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>>)];
+auto * _Nonnull storageObjectPtr = reinterpret_cast<std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>> *>(storage);
 LatticeUSD::_impl::$s10LatticeUSD0A11XformSourceC17drainDirtiedPathsSo3stdO3__1O0067vectorPixarSdfPathstd__1allocatorPixarSdfPath_dDGIrdqaAcmdoEAeGaFjaVyF(storage, ::swift::_impl::_impl_RefCountedClass::getOpaquePointer(*this));
-std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> result(static_cast<std::__1::vector<Pixar::SdfPath, std::allocator<Pixar::SdfPath>> &&>(*storageObjectPtr));
+std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>> result(static_cast<std::__1::vector<PXR_NS::SdfPath, std::allocator<PXR_NS::SdfPath>> &&>(*storageObjectPtr));
 storageObjectPtr->~vector();
 return result;
   }
@@ -7321,7 +7321,7 @@ return result;
     LatticeUSD::_impl::swift_interop_returnDirect_LatticeUSD_uint64_t_0_8_uint64_t_8_16_uint64_t_16_24(result, LatticeUSD::_impl::$s10LatticeUSD17USDPopulationSyncC13PrefetchStatsV8mirrored12uniqueArrays06sharedI0AESi_S2itcfC(mirrored, uniqueArrays, sharedArrays));
   });
   }
-  SWIFT_INLINE_THUNK USDStageSource USDStageSource::init(Pixar::UsdStage *_Nonnull stage) {
+  SWIFT_INLINE_THUNK USDStageSource USDStageSource::init(PXR_NS::UsdStage *_Nonnull stage) {
   return _impl::_impl_USDStageSource::makeRetained(LatticeUSD::_impl::$s10LatticeUSD14USDStageSourceC5stageACSo5PixarO8UsdStageV_tcfC(stage, swift::TypeMetadataTrait<USDStageSource>::getTypeMetadata()));
   }
   SWIFT_INLINE_THUNK swift::Int USDStageSource::lookupKey(const swift::String& path) {

@@ -35,7 +35,7 @@ HdSceneIndexPrim LatticeHydraSceneIndex::GetPrim(const SdfPath &primPath) const
     return prim;
   }
 
-  Pixar::GfMatrix4d xf(1.0);
+  PXR_NS::GfMatrix4d xf(1.0);
   if (_latticeSource->didGetLiveXform(xf, primPath)) {
     HdContainerDataSourceEditor editor(prim.dataSource);
     editor.Set(HdXformSchema::GetDefaultLocator(),

@@ -13,10 +13,13 @@
 import Foundation
 import HydraKit
 import OpenUSDKit
+
+#if canImport(OpenColorIO)
 import OCIOBundle
 import OpenColorIO
 
 public typealias OCIO = OpenColorIO_v2_3
+#endif // canImport(OpenColorIO)
 
 #if os(Android)
   import AndroidBackend
@@ -172,16 +175,18 @@ public enum AppUtils
     }
   }
   
-  public static func setupColorManagement(config ocio: OCIOConfigProfileType)
-  {
-    guard let ocioConfig = ocio.config
-    else { return print("Could not find OCIO config.") }
+  #if canImport(OpenColorIO)
+    public static func setupColorManagement(config ocio: OCIOConfigProfileType)
+    {
+      guard let ocioConfig = ocio.config
+      else { return print("Could not find OCIO config.") }
 
-    #if os(macOS)
-      /* setup ocio color config. */
-      setenv("OCIO", ocioConfig, 1)
-    #endif /* macOS */
+      #if os(macOS)
+        /* setup ocio color config. */
+        setenv("OCIO", ocioConfig, 1)
+      #endif /* macOS */
 
-    print(Overlay.GetOCIOConfigSummary(OCIO.GetCurrentConfig()))
-  }
+      print(Overlay.GetOCIOConfigSummary(OCIO.GetCurrentConfig()))
+    }
+  #endif // canImport(OpenColorIO)
 }

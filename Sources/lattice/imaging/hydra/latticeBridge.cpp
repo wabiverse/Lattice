@@ -10,23 +10,37 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ---------------------------------------------------------------- */
 
-#include <Tf/declarePtrs.h>
-#include <Tf/refPtr.h>
-
-#include <Gf/quatf.h>
-#include <Gf/vec3f.h>
-#include <Gf/matrix4d.h>
-
-#include <Vt/array.h>
-
-#include <Sdf/path.h>
-#include <Usd/stage.h>
-
-#include <Hd/containerDataSourceEditor.h>
-#include <Hd/primvarsSchema.h>
-#include <Hd/retainedDataSource.h>
-#include <Hd/sceneIndexPluginRegistry.h>
-#include <Hd/tokens.h>
+#if __has_include(<pxr/pxrns.h>)
+# include <pxr/pxrns.h>
+# include <Tf/declarePtrs.h>
+# include <Tf/refPtr.h>
+# include <Gf/quatf.h>
+# include <Gf/vec3f.h>
+# include <Gf/matrix4d.h>
+# include <Vt/array.h>
+# include <Sdf/path.h>
+# include <Usd/stage.h>
+# include <Hd/containerDataSourceEditor.h>
+# include <Hd/primvarsSchema.h>
+# include <Hd/retainedDataSource.h>
+# include <Hd/sceneIndexPluginRegistry.h>
+# include <Hd/tokens.h>
+#else
+# include <pxr/pxr.h>
+# include <pxr/base/tf/declarePtrs.h>
+# include <pxr/base/tf/refPtr.h>
+# include <pxr/base/gf/quatf.h>
+# include <pxr/base/gf/vec3f.h>
+# include <pxr/base/gf/matrix4d.h>
+# include <pxr/base/vt/array.h>
+# include <pxr/usd/sdf/path.h>
+# include <pxr/usd/usd/stage.h>
+# include <pxr/imaging/hd/containerDataSourceEditor.h>
+# include <pxr/imaging/hd/primvarsSchema.h>
+# include <pxr/imaging/hd/retainedDataSource.h>
+# include <pxr/imaging/hd/sceneIndexPluginRegistry.h>
+# include <pxr/imaging/hd/tokens.h>
+#endif
 
 #include "wabi/imaging/hydra/latticeBridge.h"
 #include "wabi/imaging/hydra/instancerSceneIndex.h"

@@ -13,18 +13,23 @@
 #ifndef __WABI_IMAGING_HYDRA_INSTANCER_SCENE_INDEX_H__
 #define __WABI_IMAGING_HYDRA_INSTANCER_SCENE_INDEX_H__
 
-#include <pxr/pxrns.h>
-
-#include <Tf/declarePtrs.h>
-#include <Tf/refPtr.h>
-
-#include <Sdf/path.h>
-
-#include <Vt/array.h>
-
-#include <Hd/dataSource.h>
-
-#include <Hd/filteringSceneIndex.h>
+#if __has_include(<pxr/pxrns.h>)
+# include <pxr/pxrns.h>
+# include <Tf/declarePtrs.h>
+# include <Tf/refPtr.h>
+# include <Sdf/path.h>
+# include <Vt/array.h>
+# include <Hd/dataSource.h>
+# include <Hd/filteringSceneIndex.h>
+#else
+# include <pxr/pxr.h>
+# include <pxr/base/tf/declarePtrs.h>
+# include <pxr/base/tf/refPtr.h>
+# include <pxr/usd/sdf/path.h>
+# include <pxr/base/vt/array.h>
+# include <pxr/imaging/hd/dataSource.h>
+# include <pxr/imaging/hd/filteringSceneIndex.h>
+#endif
 
 #include <mutex>
 
